@@ -65,7 +65,7 @@ So: our core system must be AUDIO-ONLY speech separation. The field has moved fa
 ## Phase 0, Foundations and environment (about week 1)
 - [x] Create conda env `voxsplit` (Python 3.10)
 - [x] Install PyTorch cu128 and torchaudio (Blackwell GPU requirement), torch 2.11.0+cu128
-- [x] Install `ffmpeg` into the env
+- [x] Install `ffmpeg` and `sox` into the env (SoX is required by LibriMix generation in Phase 2)
 - [x] Install core stack: `speechbrain`, `librosa`, `soundfile`, `pesq`, `pystoi`, `mir_eval`, `fast_bss_eval`, `matplotlib`, `numpy`, `scipy`, `tqdm`
 - [x] Verify `torch.cuda.is_available()` is True and reports the RTX 5070 Ti (sm_120 kernels present, matmul on GPU passes; run `python src/check_env.py`)
 - [x] Decide training location: local RTX 5070 Ti (primary), with Kaggle/Colab as backup for big runs
