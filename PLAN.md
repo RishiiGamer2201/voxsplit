@@ -63,14 +63,15 @@ The seniors' evaluation is on **audio inputs** ("take an audio input which has t
 ---
 
 ## Phase 0 — Foundations & environment (≈ week 1)
-- [ ] Create conda env `voxsplit` (Python 3.10)  ← *Claude is setting this up now*
-- [ ] Install PyTorch **cu128** + torchaudio (Blackwell GPU requirement)
-- [ ] Install `ffmpeg` into the env
-- [ ] Install core stack: `speechbrain`, `librosa`, `soundfile`, `pesq`, `pystoi`, `mir_eval`, `fast_bss_eval`, `matplotlib`, `numpy`, `scipy`, `tqdm`
-- [ ] Verify `torch.cuda.is_available()` is True and reports the RTX 5070 Ti
-- [ ] Decide training location: **local RTX 5070 Ti** (primary) — Kaggle/Colab as backup for big runs
-- [ ] Team study session: STFT, masking, PIT, SI-SDR. Read L2L + SepFormer + Conv-TasNet papers (skim ok)
-- [ ] Repo scaffolding: `src/` layout, `.gitignore`, `requirements.txt`, experiment logging (W&B free tier or CSV)
+- [x] Create conda env `voxsplit` (Python 3.10)
+- [x] Install PyTorch **cu128** + torchaudio (Blackwell GPU requirement) — torch 2.11.0+cu128
+- [x] Install `ffmpeg` into the env
+- [x] Install core stack: `speechbrain`, `librosa`, `soundfile`, `pesq`, `pystoi`, `mir_eval`, `fast_bss_eval`, `matplotlib`, `numpy`, `scipy`, `tqdm`
+- [x] Verify `torch.cuda.is_available()` is True and reports the RTX 5070 Ti (sm_120 kernels present, matmul on GPU passes — run `python src/check_env.py`)
+- [x] Decide training location: **local RTX 5070 Ti** (primary) — Kaggle/Colab as backup for big runs
+- [x] Repo scaffolding: `src/` layout, `.gitignore`, `requirements.txt`, `README.md`; git initialized
+- [ ] Team study session: STFT, masking, PIT, SI-SDR. Read L2L + SepFormer + Conv-TasNet papers (skim ok)  ← *your task while reading the Research Summary*
+- [ ] Experiment logging choice (W&B free tier or CSV) — decide in Phase 1
 - [ ] **Deliverable:** everyone can load a wav, compute a spectrogram, and compute SI-SDR between two signals
 
 ## Phase 1 — Working baseline (pretrained, zero training) — week 1–2
