@@ -71,7 +71,7 @@ So: our core system must be AUDIO-ONLY speech separation. The field has moved fa
 - [x] Decide training location: local RTX 5070 Ti (primary), with Kaggle/Colab as backup for big runs
 - [x] Repo scaffolding: `src/` layout, `.gitignore`, `requirements.txt`, `README.md`; git initialized
 - [ ] Team study session: STFT, masking, PIT, SI-SDR. Read L2L, SepFormer, and Conv-TasNet papers (skim ok). This is your task while reading the Research Summary
-- [ ] Experiment logging choice (W&B free tier or CSV), decide in Phase 1
+- [x] Experiment logging decided: start with simple CSV logs in Phase 1 (no extra dependency), optionally add Weights & Biases (free tier) when training starts in Phase 3
 - [ ] Deliverable: everyone can load a wav, compute a spectrogram, and compute SI-SDR between two signals
 
 ## Phase 1, Working baseline (pretrained, zero training), week 1 to 2
@@ -98,6 +98,7 @@ Get an end-to-end system running immediately. This de-risks the whole project.
 - [ ] Train 4-speaker and 5-speaker models (fresh output heads, warm-start encoder/masknet from the 3-spk checkpoint)
 - [ ] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025)
 - [ ] Loss: SI-SDR with utterance-level PIT; track SI-SDRi per level on the frozen sets
+- [ ] Optionally add Weights & Biases (free tier) for run tracking now that training is underway; keep the CSV logs as the source of truth
 - [ ] Deliverable: model bank `{2spk, 3spk, 4spk, 5spk}`, each beating the pretrained baseline on its level
 
 ## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
