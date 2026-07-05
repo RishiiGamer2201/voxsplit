@@ -1,13 +1,16 @@
 # VoxSplit dependencies (Python 3.10, conda env `voxsplit`)
 #
 # STEP 1: install PyTorch from the CUDA 12.8 index (REQUIRED for the RTX 5070 Ti,
-#          which is Blackwell / sm_120; older cu124/cu126 wheels have no kernels for it):
-#     pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+#          which is Blackwell / sm_120; older cu124/cu126 wheels have no kernels for it).
+#          Install the latest stable and verify with src/check_env.py; do not blindly
+#          hard-pin. Confirmed working here: torch 2.11.0+cu128.
+#     pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128
 #
 # STEP 2: install the rest:
 #     pip install -r requirements.txt
 #
-# ffmpeg is installed via conda, not pip:  conda install -c conda-forge ffmpeg
+# ffmpeg and SoX are installed via conda, not pip (SoX is needed for LibriMix):
+#     conda install -c conda-forge ffmpeg sox
 
 # deep learning and audio core (torch installed separately, see above)
 numpy==2.2.6

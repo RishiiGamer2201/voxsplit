@@ -27,11 +27,13 @@ NVIDIA RTX 5070 Ti (16 GB, Blackwell/sm_120), Intel Core Ultra 7 265K, 32 GB RAM
 conda create -y -n voxsplit python=3.10
 conda activate voxsplit
 
-# 2. PyTorch: you MUST use the cu128 index for the Blackwell GPU
-pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+# 2. PyTorch: you MUST use the cu128 index for the Blackwell GPU.
+#    Install the latest stable torch/torchaudio from that index, then verify in step 4.
+#    Do not hard-pin a version blindly. Confirmed working on this machine: torch 2.11.0+cu128.
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu128
 
-# 3. ffmpeg plus the rest
-conda install -y -c conda-forge ffmpeg
+# 3. ffmpeg and SoX (SoX is required by LibriMix generation in Phase 2), plus the rest
+conda install -y -c conda-forge ffmpeg sox
 pip install -r requirements.txt
 
 # 4. Verify (should report CUDA True, sm_120 kernels, and a passing matmul)

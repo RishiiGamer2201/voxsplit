@@ -17,7 +17,7 @@
 | CUDA (system) | Toolkit 12.6, driver CUDA 13.3 | PyTorch bundles its own runtime, so the system CUDA version does not matter for pip torch |
 | Python | conda env `voxsplit` = Python 3.10 | |
 | Tools present | git, conda, WSL2 (Ubuntu) | |
-| Tools to add | `ffmpeg` (into env), `gh` CLI (optional, for GitHub) | |
+| Tools to add | `ffmpeg` and `sox` (into env; SoX is required by LibriMix generation), `gh` CLI (optional, for GitHub) | |
 
 **16 GB VRAM budget:** plenty for inference of any pretrained model. For training, use 8 kHz plus gradient accumulation or smaller batch for the big transformers (SepFormer, MossFormer2). Conv-TasNet and 8 kHz SepFormer fine-tune comfortably.
 
@@ -83,27 +83,29 @@ Get an end-to-end system running immediately. This de-risks the whole project.
 - [ ] Deliverable: `separate.py input.wav --out_dir out/` producing per-speaker wavs plus a metrics table for 2 and 3-speaker mixtures
 
 ## Phase 2, Data pipeline, week 2 to 3 (overlaps Phase 1)
+- [ ] Install SoX first, LibriMix generation requires it: `conda install -c conda-forge sox`
 - [ ] Download LibriSpeech `train-clean-100` and `train-clean-360`, `dev-clean`, `test-clean`
-- [ ] Generate Libri2Mix and Libri3Mix via official LibriMix scripts
-- [ ] Write our own extension for 4 and 5-speaker mixtures (sample K speakers, gain-normalize, sum, min/max-length variants)
-- [ ] Variants per count: clean, plus WHAM noise, plus reverb (pyroomacoustics). 8 kHz first (fast), 16 kHz later
-- [ ] Freeze held-out test sets per level (2, 3, 4, 5 spk by clean/noisy). Never train on these
-- [ ] Deliverable: `data/` with reproducible generation scripts plus frozen eval sets
+- [ ] Start small and get one path fully working: clean, 8 kHz, 3-speaker (Libri3Mix) via the official LibriMix scripts, with a fixed frozen test manifest. Do not add anything else until this end-to-end path works
+- [ ] Then add Libri2Mix, and only after the clean path is solid, add WHAM noise and reverb (pyroomacoustics) variants, then 16 kHz
+- [ ] Write our own extension for 4 and 5-speaker mixtures (sample K speakers, gain-normalize, sum, min/max-length variants). NOTE: 4/5-speaker LibriMix is NOT a standard published benchmark. Treat it as our own custom dataset and commit its metadata/manifests so results stay reproducible
+- [ ] Freeze held-out test sets per level (2, 3, 4, 5 spk by clean/noisy) with committed manifests. Never train on these
+- [ ] Deliverable: `data/` with reproducible generation scripts plus frozen eval sets and committed manifests
 
 ## Phase 3, Train our own models, week 3 to 6 (the core)
-- [ ] Warm-up: train Conv-TasNet on Libri2Mix (Asteroid recipe). Verifies the pipeline in about 1 GPU-day, teaches PIT
+- [ ] Priority: fine-tune pretrained models (SepFormer, and ClearerVoice/MossFormer2) rather than training from scratch. For the time we have, fine-tuning gives the best results
+- [ ] Optional learning warm-up: train Conv-TasNet on Libri2Mix (Asteroid recipe) to understand PIT end-to-end in about 1 GPU-day. Skip if short on time
 - [ ] Main: fine-tune pretrained SepFormer (libri3mix) on our Libri3Mix
 - [ ] Train 4-speaker and 5-speaker models (fresh output heads, warm-start encoder/masknet from the 3-spk checkpoint)
 - [ ] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025)
 - [ ] Loss: SI-SDR with utterance-level PIT; track SI-SDRi per level on the frozen sets
 - [ ] Deliverable: model bank `{2spk, 3spk, 4spk, 5spk}`, each beating the pretrained baseline on its level
 
-## Phase 4, Unknown speaker count, week 5 to 7 (likely the evaluation differentiator)
-Test inputs will not announce how many speakers there are.
-- [ ] Speaker-count classifier (do first): a small CNN/CRNN on log-mel that predicts K in {1..5}, then route to the K-speaker model. Training labels are free from our generator
-- [ ] Max-N plus silence detection (fallback): run the 5-spk model, drop low-energy or no-speech channels; train the 5-spk model with some lower-K mixtures (extra targets are silence)
-- [ ] Recursive one-vs-rest separation (stretch): peel one speaker at a time until the residual has no speech (Takahashi 2019; coarse-to-fine arXiv:2203.16054). Scales to arbitrary K, a strong "as many speakers as possible" story
-- [ ] Cross-check counts from classifier versus silence-detection; reconcile (for example, take the max)
+## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
+Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost, so build more than one approach and compare them on the frozen sets.
+- [ ] Speaker-count classifier: a small CNN/CRNN on log-mel that predicts K in {1..5}, then route to the K-speaker model. Fast to build and training labels are free from our generator. Keep it, but do not rely on it alone
+- [ ] Max-N plus silence detection (serious candidate, not just a fallback): run the 5-spk model, drop low-energy or no-speech channels; train the 5-spk model with some lower-K mixtures where the extra targets are silence
+- [ ] Recursive one-and-rest separation (serious candidate): peel one speaker at a time until the residual has no speech. Takahashi et al. report that estimating the count during recursive separation can outperform a separate classifier (arXiv:1904.03065; coarse-to-fine variant arXiv:2203.16054). Scales to arbitrary K, the strongest "as many speakers as possible" story
+- [ ] Compare all three on the frozen sets (count accuracy and separation quality), then pick or ensemble. Cross-check counts and reconcile disagreements (for example, take the max)
 - [ ] Deliverable: single entry point `separate.py input.wav` working with no prior knowledge of speaker count
 
 ## Phase 5, Robustness and real-world inputs, week 6 to 8
@@ -158,6 +160,6 @@ VoxSplit/
 - ClearerVoice-Studio (MossFormer2): https://github.com/modelscope/ClearerVoice-Studio
 - LibriMix generation: https://github.com/JorisCos/LibriMix
 - Asteroid toolkit: https://github.com/asteroid-team/asteroid
-- Unknown-count separation: Takahashi 2019 (recursive), Coarse-to-Fine recursive https://arxiv.org/abs/2203.16054
+- Unknown-count separation: Takahashi et al. 2019, recursive one-and-rest PIT https://arxiv.org/abs/1904.03065 , and Coarse-to-Fine recursive https://arxiv.org/abs/2203.16054
 - Modern AV separation: https://github.com/spkgyk/RTFS-Net , https://github.com/JusperLee/IIANet , https://github.com/JusperLee/CTCNet
 - Paper and code index for the whole field: https://github.com/gemengtju/Tutorial_Separation
