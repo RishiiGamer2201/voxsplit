@@ -1,6 +1,6 @@
 """VoxSplit environment check.
 
-Verifies the whole stack is importable and — critically — that the Blackwell
+Verifies the whole stack is importable and, critically, that the Blackwell
 RTX 5070 Ti (sm_120) actually executes CUDA kernels, not just that CUDA is
 "available". Run:  python src/check_env.py
 """
@@ -28,7 +28,7 @@ def main() -> int:
         sm = f"sm_{cap[0]}{cap[1]}"
         print(f"kernels for : {sm} present -> {sm in arch_list}")
 
-        # Real kernel execution test — this is what actually proves the wheel
+        # Real kernel execution test: this is what actually proves the wheel
         # ships Blackwell kernels. A mismatched wheel fails right here.
         a = torch.randn(4096, 4096, device="cuda")
         b = torch.randn(4096, 4096, device="cuda")
@@ -37,7 +37,7 @@ def main() -> int:
         print(f"matmul test : OK  (result sum={c.sum().item():.2f}, "
               f"device={c.device})")
     else:
-        print("!! CUDA not available — training will fall back to CPU (slow).")
+        print("!! CUDA not available, training will fall back to CPU (slow).")
 
     import torchaudio
     import librosa
@@ -56,7 +56,7 @@ def main() -> int:
     import shutil
     print(f"ffmpeg      : {shutil.which('ffmpeg') or 'NOT FOUND'}")
 
-    print("\nAll good — environment is ready." if cuda_ok else
+    print("\nAll good, environment is ready." if cuda_ok else
           "\nEnv imports OK but no GPU acceleration.")
     return 0 if cuda_ok else 1
 

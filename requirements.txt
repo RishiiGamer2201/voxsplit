@@ -1,28 +1,28 @@
 # VoxSplit dependencies (Python 3.10, conda env `voxsplit`)
 #
-# STEP 1 — install PyTorch from the CUDA 12.8 index (REQUIRED for the RTX 5070 Ti,
+# STEP 1: install PyTorch from the CUDA 12.8 index (REQUIRED for the RTX 5070 Ti,
 #          which is Blackwell / sm_120; older cu124/cu126 wheels have no kernels for it):
 #     pip install torch==2.11.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu128
 #
-# STEP 2 — install the rest:
+# STEP 2: install the rest:
 #     pip install -r requirements.txt
 #
 # ffmpeg is installed via conda, not pip:  conda install -c conda-forge ffmpeg
 
-# --- deep learning / audio core (torch installed separately, see above) ---
+# deep learning and audio core (torch installed separately, see above)
 numpy==2.2.6
 scipy==1.15.3
 librosa==0.11.0
 soundfile==0.14.0
 speechbrain==1.1.0
 
-# --- evaluation metrics ---
+# evaluation metrics
 pesq==0.0.4
 pystoi==0.4.1
 mir_eval==0.8.2
 fast_bss_eval==0.1.4
 
-# --- utilities ---
+# utilities
 matplotlib==3.10.9
 tqdm==4.68.3
 huggingface_hub==1.22.0
