@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+env/
+
+# --- audio data & datasets (never commit large audio) ---
+data/**/*.wav
+data/**/*.flac
+data/**/*.mp3
+data/**/*.m4a
+data/LibriSpeech/
+data/LibriMix/
+data/wham*/
+*.tar.gz
+*.zip
+
+# --- model checkpoints & downloads ---
+*.ckpt
+*.pt
+*.pth
+pretrained_models/          # speechbrain auto-downloads here
+checkpoints/
+experiments/**/*.ckpt
+
+# --- experiment logs ---
+wandb/
+*.log
+
+# --- outputs ---
+out/
+outputs/
+separated/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Claude Code local files ---
+.claude/
