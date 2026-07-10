@@ -94,24 +94,36 @@ Get an end-to-end system running immediately. This de-risks the whole project.
 ## Phase 3, Train our own models, week 3 to 6 (the core)
 - [ ] Priority: fine-tune pretrained models (SepFormer, and ClearerVoice/MossFormer2) rather than training from scratch. For the time we have, fine-tuning gives the best results
 - [ ] Optional learning warm-up: train Conv-TasNet on Libri2Mix (Asteroid recipe) to understand PIT end-to-end in about 1 GPU-day. Skip if short on time
-- [ ] Main: fine-tune pretrained SepFormer (libri3mix) on our Libri3Mix
-- [ ] Train 4-speaker and 5-speaker models (fresh output heads, warm-start encoder/masknet from the 3-spk checkpoint)
+- [ ] Baseline track: fine-tune pretrained SepFormer (libri3mix) on our Libri3Mix with standard utterance-level PIT and fixed 3 outputs. This is the comparison point, not the final system
+- [ ] Headline track, SepFormer + OR-PIT (the team's proposal, and the right call). Retrain SepFormer with a 2-head "one and rest" output: head 1 is one speaker, head 2 is the sum of all remaining speakers.
+  - IMPORTANT: OR-PIT is a training objective plus an output topology, NOT an inference-time switch. The pretrained uPIT checkpoints cannot do it as-is; this track requires real training
+  - [ ] Warm-start from `speechbrain/sepformer-wsj02mix`, which already has exactly 2 output heads. Redefine target 2 as the residual mixture instead of "speaker 2"
+  - [ ] OR-PIT loss: choose the permutation (which speaker is the "one") that minimizes SI-SDR loss on head 1, with head 2 scored against the sum of the rest
+  - [ ] Train on a mix of 2 and 3-speaker data so recursion depth varies. Takahashi et al. trained on 2 and 3 speakers and generalized to 4 (arXiv:1904.03065)
+  - [ ] Precedent: transformer/SepFormer-style extraction blocks trained with OR-PIT are published, so this is not unexplored territory (Deflationary Extraction Transformer, https://doi.org/10.3390/s25164905)
+- [ ] Optional fixed-N comparison models: 4-speaker and 5-speaker uPIT models (fresh output heads, warm-start from the 3-spk checkpoint), purely to benchmark OR-PIT against
 - [ ] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025)
-- [ ] Loss: SI-SDR with utterance-level PIT; track SI-SDRi per level on the frozen sets
+- [ ] Loss and tracking: SI-SDR; track SI-SDRi per level on the frozen sets
+- [ ] VRAM note: SepFormer is heavy. On 16 GB use 8 kHz, short segments (about 3 s), small batch plus gradient accumulation
 - [ ] Optionally add Weights & Biases (free tier) for run tracking now that training is underway; keep the CSV logs as the source of truth
-- [ ] Deliverable: model bank `{2spk, 3spk, 4spk, 5spk}`, each beating the pretrained baseline on its level
+- [ ] Deliverable: one OR-PIT SepFormer that separates 2 to 5 speakers, plus fixed-N baselines to compare it against
 
 ## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
-Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost, so build more than one approach and compare them on the frozen sets.
-- [ ] Speaker-count classifier: a small CNN/CRNN on log-mel that predicts K in {1..5}, then route to the K-speaker model. Fast to build and training labels are free from our generator. Keep it, but do not rely on it alone
-- [ ] Max-N plus silence detection (serious candidate, not just a fallback): run the 5-spk model, drop low-energy or no-speech channels; train the 5-spk model with some lower-K mixtures where the extra targets are silence
-- [ ] Recursive one-and-rest separation (serious candidate): peel one speaker at a time until the residual has no speech. Takahashi et al. report that estimating the count during recursive separation can outperform a separate classifier (arXiv:1904.03065; coarse-to-fine variant arXiv:2203.16054). Scales to arbitrary K, the strongest "as many speakers as possible" story
-- [ ] Compare all three on the frozen sets (count accuracy and separation quality), then pick or ensemble. Cross-check counts and reconcile disagreements (for example, take the max)
+Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost. Both the external review and the team's own paper survey converge on recursive separation as the primary route, so that is what we build.
+- [ ] PRIMARY, recursive OR-PIT separation using the Phase 3 model: extract the most dominant speaker, feed the residual back into the same network, repeat. Recursion depth adapts to the unknown speaker count, so one model covers every level
+- [ ] Stopping criterion: a binary classifier on the residual deciding "speech remains" versus "noise only". This is the single highest-risk component. A false positive keeps recursing and injects noise; a false negative silently drops a real speaker. Budget real time for it
+- [ ] Speaker count then comes for free from the recursion depth. Takahashi et al. report this is MORE accurate than estimating the count in advance with a separate classifier (arXiv:1904.03065)
+- [ ] Secondary, speaker-count classifier: small CNN/CRNN on log-mel predicting K in {1..5}, routing to a fixed-N model. Build it as a cross-check and an ablation for the report, not as the main path
+- [ ] Secondary, max-N plus silence detection: run the 5-spk model and drop low-energy or no-speech channels
+- [ ] Known OR-PIT weaknesses we must measure and report honestly: error propagation (a bad early pass contaminates every later pass), no parallelism (passes are sequential, so inference is slow), and sensitivity to the stop classifier. Takahashi notes fine-tuning the recursion helps
+- [ ] Compare all three on the frozen sets (count accuracy and separation quality), then pick or ensemble. Cross-check counts and reconcile disagreements
 - [ ] Deliverable: single entry point `separate.py input.wav` working with no prior knowledge of speaker count
 
 ## Phase 5, Robustness and real-world inputs, week 6 to 8
 - [ ] Input normalization: resample to model rate, downmix to mono, loudness-normalize
 - [ ] Long-audio handling: chunk into about 10 s windows with overlap; overlap-add with permutation alignment across chunks (correlate overlap regions and/or ECAPA-TDNN speaker embeddings plus clustering; SpeechBrain has pretrained ECAPA). Prevents identity swaps mid-file
+- [ ] OR-PIT interaction (important): recursion runs per chunk, so different chunks can extract speakers in a different ORDER and can even return a different NUMBER of speakers. ECAPA embeddings are therefore mandatory, not optional. Use them both to stitch identities across chunks and to reconcile per-chunk speaker counts (take the union across chunks)
+- [ ] Note: PIT only resolves permutation inside a chunk. It has no memory across chunks, which is exactly why the embedding step exists
 - [ ] Noise/reverb robustness: fine-tune on noisy and reverberant variants from Phase 2
 - [ ] Optional polish: pass each separated stream through a speech-enhancement model (ClearerVoice FRCRN or MossFormer2-SE) to clean residual bleed
 - [ ] Test on real-world audio: record ourselves talking simultaneously; YouTube podcast clips with crosstalk
@@ -161,6 +173,8 @@ VoxSplit/
 - ClearerVoice-Studio (MossFormer2): https://github.com/modelscope/ClearerVoice-Studio
 - LibriMix generation: https://github.com/JorisCos/LibriMix
 - Asteroid toolkit: https://github.com/asteroid-team/asteroid
-- Unknown-count separation: Takahashi et al. 2019, recursive one-and-rest PIT https://arxiv.org/abs/1904.03065 , and Coarse-to-Fine recursive https://arxiv.org/abs/2203.16054
+- Unknown-count separation: Takahashi et al. 2019, recursive one-and-rest PIT (OR-PIT) https://arxiv.org/abs/1904.03065 , and Coarse-to-Fine recursive https://arxiv.org/abs/2203.16054
+- SepFormer-style transformer extraction blocks trained with OR-PIT: Deflationary Extraction Transformer https://doi.org/10.3390/s25164905
+- Deep Clustering (Hershey et al. 2016), the embedding/clustering alternative to PIT, and chronologically EARLIER than Conv-TasNet: https://arxiv.org/abs/1508.04306
 - Modern AV separation: https://github.com/spkgyk/RTFS-Net , https://github.com/JusperLee/IIANet , https://github.com/JusperLee/CTCNet
 - Paper and code index for the whole field: https://github.com/gemengtju/Tutorial_Separation
