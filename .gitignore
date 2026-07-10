@@ -36,6 +36,8 @@ outputs/
 separated/
 data/mixtures/
 data/mixtures_2spk/
+data/eval_set/
+data/eval_estimates/
 data/estimates/
 
 # --- OS / editor ---

@@ -103,13 +103,24 @@ Takeaways:
 - Raw per-mixture numbers are logged in `experiments/phase1_results.csv` (3-spk) and `experiments/phase1_2spk_results.csv` (2-spk).
 
 ## Phase 2, Data pipeline, week 2 to 3 (overlaps Phase 1)
-- [ ] Install SoX first, LibriMix generation requires it: `conda install -c conda-forge sox`
-- [ ] Download LibriSpeech `train-clean-100` and `train-clean-360`, `dev-clean`, `test-clean`
-- [ ] Start small and get one path fully working: clean, 8 kHz, 3-speaker (Libri3Mix) via the official LibriMix scripts, with a fixed frozen test manifest. Do not add anything else until this end-to-end path works
-- [ ] Then add Libri2Mix, and only after the clean path is solid, add WHAM noise and reverb (pyroomacoustics) variants, then 16 kHz
-- [ ] Write our own extension for 4 and 5-speaker mixtures (sample K speakers, gain-normalize, sum, min/max-length variants). NOTE: 4/5-speaker LibriMix is NOT a standard published benchmark. Treat it as our own custom dataset and commit its metadata/manifests so results stay reproducible
-- [ ] Freeze held-out test sets per level (2, 3, 4, 5 spk by clean/noisy) with committed manifests. Never train on these
-- [ ] Deliverable: `data/` with reproducible generation scripts plus frozen eval sets and committed manifests
+- [x] Install SoX (done in Phase 0)
+- [x] Download LibriSpeech `dev-clean` and `test-clean` (40 speakers each, disjoint sets). `train-clean-100/360` deferred until Phase 3 training needs them
+- [x] Frozen clean eval set built with our own generator: 8 kHz, speaker counts 2, 3, 4, 5, 20 mixtures each (80 total), sampled from test-clean so eval speakers stay unseen by future training
+- [x] Manifest-first, reproducible design: `src/data/build_eval_set.py` writes a small committed JSON manifest (relative source paths, speaker ids, exact linear gains); `src/data/realize_eval_set.py` regenerates byte-identical audio from it. Audio is gitignored, the manifest is committed, so the eval set is fully reproducible without storing audio in git
+- [x] 4 and 5-speaker mixtures included. NOTE: these are our own custom dataset, NOT a standard published benchmark. The committed manifest keeps them reproducible
+- [x] Batch tooling: `src/inference/separate_set.py` (loads a model once, separates a whole level) and `src/eval/evaluate_set.py` (scores and aggregates by speaker count into `experiments/eval_set_results.csv`)
+- [ ] Still to do: add WHAM noise and reverb (pyroomacoustics) variants, then a 16 kHz set. Only after the clean path, which is done
+- [x] Deliverable (clean): `data/eval_manifest.json` committed, reproducible generation and batch scoring scripts in place
+
+### Frozen eval set baselines (test-clean, 20 mixtures per level, scored at 8 kHz)
+| Level | Model | SI-SDRi (dB) | PESQ | STOI |
+|---|---|---|---|---|
+| 2 spk | sepformer-wsj02mix | 17.35 | 3.37 | 0.96 |
+| 3 spk | sepformer-libri3mix | 19.33 | 3.20 | 0.93 |
+| 4 spk | no pretrained model yet (Phase 3) | n/a | n/a | n/a |
+| 5 spk | no pretrained model yet (Phase 3) | n/a | n/a | n/a |
+
+These are the numbers every future model must beat on the same frozen mixtures. Per-level rows accumulate in `experiments/eval_set_results.csv`.
 
 ## Phase 3, Train our own models, week 3 to 6 (the core)
 - [ ] Priority: fine-tune pretrained models (SepFormer, and ClearerVoice/MossFormer2) rather than training from scratch. For the time we have, fine-tuning gives the best results

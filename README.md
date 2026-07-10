@@ -11,7 +11,7 @@ summary and phase-by-phase roadmap.
 ## Status
 - [x] Phase 0, environment and GPU verified
 - [x] Phase 1, pretrained baselines compared. Best 3-spk: SepFormer libri3mix (mean SI-SDRi about 18.6 dB). Best 2-spk: MossFormer2 (about 20.2 dB). See PLAN.md for the table
-- [ ] Phase 2, data pipeline (LibriMix 2 to 5 spk)
+- [x] Phase 2, frozen eval set (2 to 5 spk, 80 mixtures, committed manifest, reproducible). Noise/reverb variants pending
 - [ ] Phase 3, train our own models
 - [ ] Phase 4, unknown speaker count
 - [ ] Phase 5, real-world robustness
