@@ -1,0 +1,7 @@
+timestamp,tag,mixture,num_speakers,mean_si_sdr,mean_si_sdri,mean_pesq,mean_stoi
+2026-07-11T02:55:24,sepformer-wsj02mix,data\mixtures_2spk\mixture_000\mixture.wav,2,19.5448,19.4976,3.4130,0.9774
+2026-07-11T02:55:30,sepformer-wsj02mix,data\mixtures_2spk\mixture_001\mixture.wav,2,16.3854,16.5009,3.4084,0.9658
+2026-07-11T02:55:37,sepformer-wsj02mix,data\mixtures_2spk\mixture_002\mixture.wav,2,15.4553,15.4965,3.5074,0.9645
+2026-07-11T03:12:09,mossformer2-ss-16k,data\mixtures_2spk\mixture_000\mixture.wav,2,22.5160,22.4688,3.7081,0.9765
+2026-07-11T03:12:11,mossformer2-ss-16k,data\mixtures_2spk\mixture_001\mixture.wav,2,21.7782,21.8937,3.9454,0.9810
+2026-07-11T03:12:14,mossformer2-ss-16k,data\mixtures_2spk\mixture_002\mixture.wav,2,16.1546,16.1957,3.6621,0.9720

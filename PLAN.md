@@ -77,10 +77,30 @@ So: our core system must be AUDIO-ONLY speech separation. The field has moved fa
 ## Phase 1, Working baseline (pretrained, zero training), week 1 to 2
 Get an end-to-end system running immediately. This de-risks the whole project.
 - [x] Run `speechbrain/sepformer-wsj03mix` (3-speaker, 8 kHz) on a synthetic 3-speaker mixture
-- [ ] Also try `speechbrain/sepformer-libri3mix` (noisier training, so more robust) and ClearerVoice-Studio MossFormer2 separators (8k/16k)
+- [x] Also tried `speechbrain/sepformer-libri3mix` and ClearerVoice-Studio MossFormer2_SS_16K (see comparison table below)
 - [x] Build `make_mixture.py`: pick K random LibriSpeech utterances, loudness-normalize (random SNR minus 5 to plus 5 dB), sum, save mix plus references. Doubles as test-set and training-data generator
 - [x] Build `evaluate.py`: given (mix, references, estimates), compute SI-SDRi, PESQ, STOI with best-permutation matching. Listen to outputs
-- [x] Deliverable: `separate.py input.wav --out-dir out/` producing per-speaker wavs plus a metrics table. First results on LibriSpeech dev-clean 3-speaker mixtures: mean SI-SDRi about 15.7 dB (range 14.6 to 17.2 over 3 mixtures), PESQ about 2.5, STOI about 0.91
+- [x] Deliverable: `separate.py input.wav --out-dir out/` producing per-speaker wavs plus a metrics table.
+
+### Phase 1 model comparison (LibriSpeech dev-clean, 3 mixtures per model, scored at 8 kHz)
+
+3-speaker mixtures:
+| Model | mean SI-SDRi (dB) | PESQ | STOI |
+|---|---|---|---|
+| sepformer-wsj03mix | 15.7 | 2.58 | 0.91 |
+| sepformer-libri3mix | **18.6** | **2.99** | **0.94** |
+
+2-speaker mixtures:
+| Model | mean SI-SDRi (dB) | PESQ | STOI |
+|---|---|---|---|
+| sepformer-wsj02mix | 17.2 | 3.44 | 0.97 |
+| MossFormer2_SS_16K | **20.2** | **3.77** | **0.98** |
+
+Takeaways:
+- For our 3-speaker target, **sepformer-libri3mix is the best pretrained baseline** (domain match with LibriSpeech). Use it as the Phase 1 default.
+- MossFormer2_SS_16K is the strongest model overall but is **2-speaker only**, so it cannot separate 3-or-more speaker inputs directly. Its 2-output "one and rest" shape makes it a natural backbone for the Phase 4 OR-PIT recursion.
+- clearvoice runs in a separate conda env (its dependencies differ and it pulls its own CPU torch). See `src/inference/separate_mossformer2.py`. On this machine the conda-forge ffprobe is broken, so that script reads audio via soundfile instead of pydub.
+- Raw per-mixture numbers are logged in `experiments/phase1_results.csv` (3-spk) and `experiments/phase1_2spk_results.csv` (2-spk).
 
 ## Phase 2, Data pipeline, week 2 to 3 (overlaps Phase 1)
 - [ ] Install SoX first, LibriMix generation requires it: `conda install -c conda-forge sox`

@@ -71,6 +71,9 @@ def main() -> int:
     parser.add_argument("--csv", type=Path,
                         default=Path("experiments/phase1_results.csv"),
                         help="CSV file to append the summary row to.")
+    parser.add_argument("--tag", default="",
+                        help="Free-text label for this run (for example the "
+                             "model name) recorded in the CSV.")
     args = parser.parse_args()
 
     if not args.mixture.is_file():
@@ -152,12 +155,15 @@ def main() -> int:
     with open(csv_path, "a", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
         if write_header:
-            writer.writerow(["timestamp", "mixture", "num_speakers",
-                             "mean_si_sdri", "mean_pesq", "mean_stoi"])
+            writer.writerow(["timestamp", "tag", "mixture", "num_speakers",
+                             "mean_si_sdr", "mean_si_sdri", "mean_pesq",
+                             "mean_stoi"])
         writer.writerow([
             datetime.now().isoformat(timespec="seconds"),
+            args.tag,
             str(args.mixture),
             k,
+            f"{mean_si_sdr:.4f}",
             f"{mean_si_sdri:.4f}",
             f"{mean_pesq:.4f}",
             f"{mean_stoi:.4f}",

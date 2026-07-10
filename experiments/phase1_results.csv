@@ -1,4 +1,7 @@
-timestamp,mixture,num_speakers,mean_si_sdri,mean_pesq,mean_stoi
-2026-07-11T02:46:42,data\mixtures\mixture_000\mixture.wav,3,15.2555,2.5665,0.9241
-2026-07-11T02:47:19,data\mixtures\mixture_001\mixture.wav,3,14.6507,2.4141,0.8724
-2026-07-11T02:47:25,data\mixtures\mixture_002\mixture.wav,3,17.2080,2.7530,0.9389
+timestamp,tag,mixture,num_speakers,mean_si_sdr,mean_si_sdri,mean_pesq,mean_stoi
+2026-07-11T02:53:15,sepformer-wsj03mix,data\mixtures\mixture_000\mixture.wav,3,12.1392,15.2555,2.5665,0.9241
+2026-07-11T02:53:21,sepformer-wsj03mix,data\mixtures\mixture_001\mixture.wav,3,11.3744,14.6507,2.4141,0.8724
+2026-07-11T02:53:27,sepformer-wsj03mix,data\mixtures\mixture_002\mixture.wav,3,13.7675,17.2080,2.7530,0.9389
+2026-07-11T02:53:43,sepformer-libri3mix,data\mixtures\mixture_000\mixture.wav,3,17.8289,20.9452,3.3864,0.9661
+2026-07-11T02:53:49,sepformer-libri3mix,data\mixtures\mixture_001\mixture.wav,3,14.9228,18.1991,3.1612,0.9365
+2026-07-11T02:53:54,sepformer-libri3mix,data\mixtures\mixture_002\mixture.wav,3,13.2405,16.6810,2.4657,0.9162

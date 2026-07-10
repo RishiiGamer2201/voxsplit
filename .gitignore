@@ -35,6 +35,7 @@ out/
 outputs/
 separated/
 data/mixtures/
+data/mixtures_2spk/
 data/estimates/
 
 # --- OS / editor ---

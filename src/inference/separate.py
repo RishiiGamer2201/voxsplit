@@ -49,9 +49,10 @@ def main() -> int:
     parser.add_argument("input", type=Path,
                         help="Input mixture wav file.")
     parser.add_argument("--model", default="speechbrain/sepformer-wsj03mix",
-                        choices=["speechbrain/sepformer-wsj03mix",
-                                 "speechbrain/sepformer-libri3mix"],
-                        help="Pretrained SepFormer model source.")
+                        help="Pretrained SepFormer model source, for example "
+                             "speechbrain/sepformer-wsj03mix, "
+                             "speechbrain/sepformer-libri3mix, or "
+                             "speechbrain/sepformer-wsj02mix (2 speakers).")
     parser.add_argument("--out-dir", required=True, type=Path,
                         help="Directory to write estimated sources.")
     parser.add_argument("--device", default="auto",
