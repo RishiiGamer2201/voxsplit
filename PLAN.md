@@ -76,11 +76,11 @@ So: our core system must be AUDIO-ONLY speech separation. The field has moved fa
 
 ## Phase 1, Working baseline (pretrained, zero training), week 1 to 2
 Get an end-to-end system running immediately. This de-risks the whole project.
-- [ ] Run `speechbrain/sepformer-wsj03mix` (3-speaker, 8 kHz) on a synthetic 3-speaker mixture
+- [x] Run `speechbrain/sepformer-wsj03mix` (3-speaker, 8 kHz) on a synthetic 3-speaker mixture
 - [ ] Also try `speechbrain/sepformer-libri3mix` (noisier training, so more robust) and ClearerVoice-Studio MossFormer2 separators (8k/16k)
-- [ ] Build `make_mixture.py`: pick K random LibriSpeech utterances, loudness-normalize (random SNR minus 5 to plus 5 dB), sum, save mix plus references. Doubles as test-set and training-data generator
-- [ ] Build `evaluate.py`: given (mix, references, estimates), compute SI-SDRi, PESQ, STOI with best-permutation matching. Listen to outputs
-- [ ] Deliverable: `separate.py input.wav --out_dir out/` producing per-speaker wavs plus a metrics table for 2 and 3-speaker mixtures
+- [x] Build `make_mixture.py`: pick K random LibriSpeech utterances, loudness-normalize (random SNR minus 5 to plus 5 dB), sum, save mix plus references. Doubles as test-set and training-data generator
+- [x] Build `evaluate.py`: given (mix, references, estimates), compute SI-SDRi, PESQ, STOI with best-permutation matching. Listen to outputs
+- [x] Deliverable: `separate.py input.wav --out-dir out/` producing per-speaker wavs plus a metrics table. First results on LibriSpeech dev-clean 3-speaker mixtures: mean SI-SDRi about 15.7 dB (range 14.6 to 17.2 over 3 mixtures), PESQ about 2.5, STOI about 0.91
 
 ## Phase 2, Data pipeline, week 2 to 3 (overlaps Phase 1)
 - [ ] Install SoX first, LibriMix generation requires it: `conda install -c conda-forge sox`

@@ -21,7 +21,8 @@ data/wham*/
 *.ckpt
 *.pt
 *.pth
-pretrained_models/          # speechbrain auto-downloads here
+# speechbrain auto-downloads model weights here
+pretrained_models/
 checkpoints/
 experiments/**/*.ckpt
 
@@ -33,6 +34,8 @@ wandb/
 out/
 outputs/
 separated/
+data/mixtures/
+data/estimates/
 
 # --- OS / editor ---
 .DS_Store
