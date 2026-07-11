@@ -1,3 +1,4 @@
 timestamp,tag,num_speakers,num_mixtures,mean_si_sdr,mean_si_sdri,mean_pesq,mean_stoi
 2026-07-11T03:37:48,sepformer-libri3mix,3,20,16.0747,19.3294,3.1969,0.9332
 2026-07-11T03:37:57,sepformer-wsj02mix,2,20,17.3599,17.3536,3.3691,0.9645
+2026-07-11T11:18:00,orpit-6k,2,20,18.8231,18.8168,3.5108,0.9671

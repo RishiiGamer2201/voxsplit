@@ -141,7 +141,8 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
   - [x] OR-PIT loss implemented in `src/train/orpit_loss.py`: one-and-rest SI-SNR that tries every "one" speaker and both head assignments and keeps the best
   - [x] Dynamic 2 and 3-speaker training mixtures from train-clean-100 (`src/train/mix_dataset.py`). Pipeline VERIFIED on the RTX 5070 Ti: warm-started model already sits at about 12 to 14 dB SI-SNRi and the OR-PIT loss trains cleanly. Full fine-tuning run launched
   - [x] Precedent: transformer/SepFormer-style extraction blocks trained with OR-PIT are published, so this is not unexplored territory (Deflationary Extraction Transformer, https://doi.org/10.3390/s25164905)
-  - [ ] Still to do: run to convergence (multi-hour to multi-day), then evaluate the fine-tuned model (2-speaker directly here; 3-or-more via the Phase 4 recursion)
+  - [x] Initial 6000-step fine-tune done. On the frozen 2-speaker level the OR-PIT model scores 18.82 dB SI-SDRi (PESQ 3.51, STOI 0.97), beating its wsj02mix warm-start baseline (17.35 dB) by about 1.5 dB. Batch inference via `src/inference/separate_orpit_set.py` loading the trained checkpoint
+  - [ ] Still to do: longer training toward convergence (tens of thousands of steps); evaluate 3-or-more speakers via the Phase 4 recursion (the 2-output model needs the recursive loop to handle more than 2 speakers)
 - [ ] Optional fixed-N comparison models: 4-speaker and 5-speaker uPIT models (fresh output heads, warm-start from the 3-spk checkpoint), purely to benchmark OR-PIT against
 - [ ] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025)
 - [ ] Loss and tracking: SI-SDR; track SI-SDRi per level on the frozen sets
