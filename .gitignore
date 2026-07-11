@@ -36,9 +36,11 @@ outputs/
 separated/
 data/mixtures/
 data/mixtures_2spk/
-data/eval_set/
-data/eval_estimates/
+data/eval_set*/
+data/eval_estimates*/
 data/estimates/
+data/wham_noise/
+data/wham_noise.zip
 
 # --- OS / editor ---
 .DS_Store

@@ -1,0 +1,3 @@
+timestamp,tag,num_speakers,num_mixtures,mean_si_sdr,mean_si_sdri,mean_pesq,mean_stoi
+2026-07-11T03:54:37,libri3mix-reverb,3,20,2.5274,6.0450,1.7921,0.6469
+2026-07-11T10:09:47,libri3mix-noise,3,20,6.3120,11.2610,2.0598,0.8021

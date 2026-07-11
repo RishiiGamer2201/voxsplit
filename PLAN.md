@@ -109,7 +109,7 @@ Takeaways:
 - [x] Manifest-first, reproducible design: `src/data/build_eval_set.py` writes a small committed JSON manifest (relative source paths, speaker ids, exact linear gains); `src/data/realize_eval_set.py` regenerates byte-identical audio from it. Audio is gitignored, the manifest is committed, so the eval set is fully reproducible without storing audio in git
 - [x] 4 and 5-speaker mixtures included. NOTE: these are our own custom dataset, NOT a standard published benchmark. The committed manifest keeps them reproducible
 - [x] Batch tooling: `src/inference/separate_set.py` (loads a model once, separates a whole level) and `src/eval/evaluate_set.py` (scores and aggregates by speaker count into `experiments/eval_set_results.csv`)
-- [ ] Still to do: add WHAM noise and reverb (pyroomacoustics) variants, then a 16 kHz set. Only after the clean path, which is done
+- [x] Noise, reverb, and 16 kHz variants added (see robustness table below). WHAM noise (test split) assigned per mixture by `src/data/make_conditions.py`; reverb via pyroomacoustics with room geometry stored in the manifest; 16 kHz set via `build_eval_set --sample-rate 16000`. All variant manifests are committed and reproducible; the audio and the WHAM corpus stay gitignored
 - [x] Deliverable (clean): `data/eval_manifest.json` committed, reproducible generation and batch scoring scripts in place
 
 ### Frozen eval set baselines (test-clean, 20 mixtures per level, scored at 8 kHz)
@@ -121,6 +121,15 @@ Takeaways:
 | 5 spk | no pretrained model yet (Phase 3) | n/a | n/a | n/a |
 
 These are the numbers every future model must beat on the same frozen mixtures. Per-level rows accumulate in `experiments/eval_set_results.csv`.
+
+### Robustness of the clean baseline under degradation (libri3mix, 3 speakers, 20 mixtures)
+| Condition | SI-SDRi (dB) | PESQ | STOI |
+|---|---|---|---|
+| clean | 19.33 | 3.20 | 0.93 |
+| WHAM noise (0 to 10 dB SNR) | 11.26 | 2.06 | 0.80 |
+| reverb (RT60 0.2 to 0.6 s) | 6.05 | 1.79 | 0.65 |
+
+The clean-trained SepFormer degrades gracefully under additive noise but collapses under reverberation. This quantifies the Phase 5 robustness gap and says reverb is the priority target. Condition rows are logged in `experiments/eval_set_conditions.csv`. Variant manifests: `data/eval_manifest_noise.json`, `data/eval_manifest_reverb.json`, and a 16 kHz clean set in `data/eval_manifest_16k.json`.
 
 ## Phase 3, Train our own models, week 3 to 6 (the core)
 - [ ] Priority: fine-tune pretrained models (SepFormer, and ClearerVoice/MossFormer2) rather than training from scratch. For the time we have, fine-tuning gives the best results

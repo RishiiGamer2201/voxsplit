@@ -1,0 +1,1897 @@
+{
+  "created": "2026-07-11T03:46:59",
+  "source_subset": "test-clean",
+  "librispeech_root": "data/LibriSpeech",
+  "sample_rate": 16000,
+  "seed": 0,
+  "normalize_peak": 0.9,
+  "speaker_counts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "per_count": 20,
+  "mixtures": [
+    {
+      "id": "spk2_000",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/5639/40744/5639-40744-0002.flac",
+          "speaker_id": "5639",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/61/70968/61-70968-0026.flac",
+          "speaker_id": "61",
+          "gain": 1.2184507540557379
+        }
+      ]
+    },
+    {
+      "id": "spk2_001",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/7127/75946/7127-75946-0027.flac",
+          "speaker_id": "7127",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5683/32879/5683-32879-0000.flac",
+          "speaker_id": "5683",
+          "gain": 0.5148738710893362
+        }
+      ]
+    },
+    {
+      "id": "spk2_002",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/2961/960/2961-960-0008.flac",
+          "speaker_id": "2961",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7176/88083/7176-88083-0022.flac",
+          "speaker_id": "7176",
+          "gain": 0.3828506458650619
+        }
+      ]
+    },
+    {
+      "id": "spk2_003",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/1580/141084/1580-141084-0042.flac",
+          "speaker_id": "1580",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/908/157963/908-157963-0019.flac",
+          "speaker_id": "908",
+          "gain": 0.8885246772830309
+        }
+      ]
+    },
+    {
+      "id": "spk2_004",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/8224/274384/8224-274384-0011.flac",
+          "speaker_id": "8224",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8555/284447/8555-284447-0010.flac",
+          "speaker_id": "8555",
+          "gain": 0.8803925674982768
+        }
+      ]
+    },
+    {
+      "id": "spk2_005",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/1284/1181/1284-1181-0004.flac",
+          "speaker_id": "1284",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4992/41797/4992-41797-0022.flac",
+          "speaker_id": "4992",
+          "gain": 0.9054666708028918
+        }
+      ]
+    },
+    {
+      "id": "spk2_006",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/672/122797/672-122797-0056.flac",
+          "speaker_id": "672",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4970/29095/4970-29095-0035.flac",
+          "speaker_id": "4970",
+          "gain": 1.1468039660048615
+        }
+      ]
+    },
+    {
+      "id": "spk2_007",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0031.flac",
+          "speaker_id": "8230",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7021/85628/7021-85628-0011.flac",
+          "speaker_id": "7021",
+          "gain": 0.5729003689826044
+        }
+      ]
+    },
+    {
+      "id": "spk2_008",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0006.flac",
+          "speaker_id": "8230",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1089/134686/1089-134686-0031.flac",
+          "speaker_id": "1089",
+          "gain": 1.5907332698750265
+        }
+      ]
+    },
+    {
+      "id": "spk2_009",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/1089/134691/1089-134691-0004.flac",
+          "speaker_id": "1089",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/908/157963/908-157963-0025.flac",
+          "speaker_id": "908",
+          "gain": 0.6775225727987355
+        }
+      ]
+    },
+    {
+      "id": "spk2_010",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/4970/29093/4970-29093-0018.flac",
+          "speaker_id": "4970",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1284/1181/1284-1181-0011.flac",
+          "speaker_id": "1284",
+          "gain": 0.5910545663698736
+        }
+      ]
+    },
+    {
+      "id": "spk2_011",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0029.flac",
+          "speaker_id": "2300",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8224/274381/8224-274381-0002.flac",
+          "speaker_id": "8224",
+          "gain": 0.7741802676433783
+        }
+      ]
+    },
+    {
+      "id": "spk2_012",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/4970/29095/4970-29095-0024.flac",
+          "speaker_id": "4970",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7176/88083/7176-88083-0006.flac",
+          "speaker_id": "7176",
+          "gain": 0.579607064380753
+        }
+      ]
+    },
+    {
+      "id": "spk2_013",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/4446/2275/4446-2275-0016.flac",
+          "speaker_id": "4446",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1995/1836/1995-1836-0003.flac",
+          "speaker_id": "1995",
+          "gain": 0.9498157420882865
+        }
+      ]
+    },
+    {
+      "id": "spk2_014",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/8224/274384/8224-274384-0013.flac",
+          "speaker_id": "8224",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2961/961/2961-961-0016.flac",
+          "speaker_id": "2961",
+          "gain": 1.932206141667603
+        }
+      ]
+    },
+    {
+      "id": "spk2_015",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/4446/2271/4446-2271-0014.flac",
+          "speaker_id": "4446",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/6829/68771/6829-68771-0006.flac",
+          "speaker_id": "6829",
+          "gain": 1.2535854352677864
+        }
+      ]
+    },
+    {
+      "id": "spk2_016",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/4970/29093/4970-29093-0022.flac",
+          "speaker_id": "4970",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0023.flac",
+          "speaker_id": "8455",
+          "gain": 0.3919569315691446
+        }
+      ]
+    },
+    {
+      "id": "spk2_017",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/260/123440/260-123440-0002.flac",
+          "speaker_id": "260",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/121/127105/121-127105-0036.flac",
+          "speaker_id": "121",
+          "gain": 1.044084289092819
+        }
+      ]
+    },
+    {
+      "id": "spk2_018",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/1284/1181/1284-1181-0020.flac",
+          "speaker_id": "1284",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1320/122617/1320-122617-0036.flac",
+          "speaker_id": "1320",
+          "gain": 0.5647558151900967
+        }
+      ]
+    },
+    {
+      "id": "spk2_019",
+      "num_speakers": 2,
+      "sources": [
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0005.flac",
+          "speaker_id": "2300",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/121/127105/121-127105-0025.flac",
+          "speaker_id": "121",
+          "gain": 3.0689341438074873
+        }
+      ]
+    },
+    {
+      "id": "spk3_000",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0016.flac",
+          "speaker_id": "7729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4077/13754/4077-13754-0006.flac",
+          "speaker_id": "4077",
+          "gain": 1.112912839096084
+        },
+        {
+          "relpath": "test-clean/3575/170457/3575-170457-0044.flac",
+          "speaker_id": "3575",
+          "gain": 1.5278848234285056
+        }
+      ]
+    },
+    {
+      "id": "spk3_001",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/5105/28241/5105-28241-0011.flac",
+          "speaker_id": "5105",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1320/122612/1320-122612-0007.flac",
+          "speaker_id": "1320",
+          "gain": 0.6289118849250047
+        },
+        {
+          "relpath": "test-clean/4970/29095/4970-29095-0024.flac",
+          "speaker_id": "4970",
+          "gain": 0.5166813615543927
+        }
+      ]
+    },
+    {
+      "id": "spk3_002",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/2830/3980/2830-3980-0072.flac",
+          "speaker_id": "2830",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/3575/170457/3575-170457-0022.flac",
+          "speaker_id": "3575",
+          "gain": 1.0967112095525775
+        },
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0008.flac",
+          "speaker_id": "1188",
+          "gain": 1.467421214601275
+        }
+      ]
+    },
+    {
+      "id": "spk3_003",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/237/134500/237-134500-0040.flac",
+          "speaker_id": "237",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4992/23283/4992-23283-0005.flac",
+          "speaker_id": "4992",
+          "gain": 1.913081979479057
+        },
+        {
+          "relpath": "test-clean/672/122797/672-122797-0007.flac",
+          "speaker_id": "672",
+          "gain": 2.932890746245805
+        }
+      ]
+    },
+    {
+      "id": "spk3_004",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/3570/5696/3570-5696-0003.flac",
+          "speaker_id": "3570",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/121/127105/121-127105-0025.flac",
+          "speaker_id": "121",
+          "gain": 2.1477253556405755
+        },
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0051.flac",
+          "speaker_id": "8455",
+          "gain": 0.5937689778736075
+        }
+      ]
+    },
+    {
+      "id": "spk3_005",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/2830/3979/2830-3979-0009.flac",
+          "speaker_id": "2830",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8555/284449/8555-284449-0007.flac",
+          "speaker_id": "8555",
+          "gain": 0.9625765452499639
+        },
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0005.flac",
+          "speaker_id": "8455",
+          "gain": 1.3663372509715408
+        }
+      ]
+    },
+    {
+      "id": "spk3_006",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/121/123852/121-123852-0002.flac",
+          "speaker_id": "121",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8555/284447/8555-284447-0014.flac",
+          "speaker_id": "8555",
+          "gain": 0.9325521970331533
+        },
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0008.flac",
+          "speaker_id": "1188",
+          "gain": 1.6239237677363396
+        }
+      ]
+    },
+    {
+      "id": "spk3_007",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/1221/135767/1221-135767-0014.flac",
+          "speaker_id": "1221",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0007.flac",
+          "speaker_id": "1188",
+          "gain": 1.0940875798021361
+        },
+        {
+          "relpath": "test-clean/8224/274384/8224-274384-0009.flac",
+          "speaker_id": "8224",
+          "gain": 0.5734708976623
+        }
+      ]
+    },
+    {
+      "id": "spk3_008",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0021.flac",
+          "speaker_id": "4507",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5105/28233/5105-28233-0003.flac",
+          "speaker_id": "5105",
+          "gain": 0.8447707644915251
+        },
+        {
+          "relpath": "test-clean/672/122797/672-122797-0046.flac",
+          "speaker_id": "672",
+          "gain": 1.0541543040212806
+        }
+      ]
+    },
+    {
+      "id": "spk3_009",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/5683/32866/5683-32866-0017.flac",
+          "speaker_id": "5683",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2830/3980/2830-3980-0072.flac",
+          "speaker_id": "2830",
+          "gain": 1.5661978342767078
+        },
+        {
+          "relpath": "test-clean/3729/6852/3729-6852-0039.flac",
+          "speaker_id": "3729",
+          "gain": 2.78994783983409
+        }
+      ]
+    },
+    {
+      "id": "spk3_010",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/237/134500/237-134500-0037.flac",
+          "speaker_id": "237",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2961/961/2961-961-0021.flac",
+          "speaker_id": "2961",
+          "gain": 4.248030341095682
+        },
+        {
+          "relpath": "test-clean/1221/135766/1221-135766-0010.flac",
+          "speaker_id": "1221",
+          "gain": 2.8022028925791784
+        }
+      ]
+    },
+    {
+      "id": "spk3_011",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/3729/6852/3729-6852-0037.flac",
+          "speaker_id": "3729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1995/1837/1995-1837-0024.flac",
+          "speaker_id": "1995",
+          "gain": 0.3680109295479796
+        },
+        {
+          "relpath": "test-clean/8555/284447/8555-284447-0014.flac",
+          "speaker_id": "8555",
+          "gain": 1.1533748085675997
+        }
+      ]
+    },
+    {
+      "id": "spk3_012",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0055.flac",
+          "speaker_id": "8455",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7176/88083/7176-88083-0026.flac",
+          "speaker_id": "7176",
+          "gain": 1.1626068118899402
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0037.flac",
+          "speaker_id": "4507",
+          "gain": 0.6451191141284784
+        }
+      ]
+    },
+    {
+      "id": "spk3_013",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0006.flac",
+          "speaker_id": "8230",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1089/134686/1089-134686-0025.flac",
+          "speaker_id": "1089",
+          "gain": 0.7760787065599007
+        },
+        {
+          "relpath": "test-clean/6930/81414/6930-81414-0023.flac",
+          "speaker_id": "6930",
+          "gain": 0.7532195592726983
+        }
+      ]
+    },
+    {
+      "id": "spk3_014",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/3575/170457/3575-170457-0046.flac",
+          "speaker_id": "3575",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7021/79740/7021-79740-0013.flac",
+          "speaker_id": "7021",
+          "gain": 0.7230760870230603
+        },
+        {
+          "relpath": "test-clean/5105/28241/5105-28241-0016.flac",
+          "speaker_id": "5105",
+          "gain": 2.6083590396117
+        }
+      ]
+    },
+    {
+      "id": "spk3_015",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/908/157963/908-157963-0028.flac",
+          "speaker_id": "908",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0039.flac",
+          "speaker_id": "2094",
+          "gain": 0.5934727867080969
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0011.flac",
+          "speaker_id": "4507",
+          "gain": 1.1102933419028556
+        }
+      ]
+    },
+    {
+      "id": "spk3_016",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/4992/23283/4992-23283-0018.flac",
+          "speaker_id": "4992",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/237/134500/237-134500-0015.flac",
+          "speaker_id": "237",
+          "gain": 0.407773268875007
+        },
+        {
+          "relpath": "test-clean/3575/170457/3575-170457-0035.flac",
+          "speaker_id": "3575",
+          "gain": 0.8820043845715636
+        }
+      ]
+    },
+    {
+      "id": "spk3_017",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0034.flac",
+          "speaker_id": "8455",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/61/70970/61-70970-0036.flac",
+          "speaker_id": "61",
+          "gain": 1.3577751368306414
+        },
+        {
+          "relpath": "test-clean/121/127105/121-127105-0027.flac",
+          "speaker_id": "121",
+          "gain": 2.916542289564077
+        }
+      ]
+    },
+    {
+      "id": "spk3_018",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/121/121726/121-121726-0004.flac",
+          "speaker_id": "121",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/237/126133/237-126133-0019.flac",
+          "speaker_id": "237",
+          "gain": 0.9075312606695187
+        },
+        {
+          "relpath": "test-clean/6829/68771/6829-68771-0012.flac",
+          "speaker_id": "6829",
+          "gain": 0.7808404260236155
+        }
+      ]
+    },
+    {
+      "id": "spk3_019",
+      "num_speakers": 3,
+      "sources": [
+        {
+          "relpath": "test-clean/7127/75947/7127-75947-0040.flac",
+          "speaker_id": "7127",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0000.flac",
+          "speaker_id": "8230",
+          "gain": 0.8249254962779866
+        },
+        {
+          "relpath": "test-clean/8555/284447/8555-284447-0002.flac",
+          "speaker_id": "8555",
+          "gain": 0.4658857056729583
+        }
+      ]
+    },
+    {
+      "id": "spk4_000",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/6930/81414/6930-81414-0001.flac",
+          "speaker_id": "6930",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1221/135766/1221-135766-0005.flac",
+          "speaker_id": "1221",
+          "gain": 0.901461168538261
+        },
+        {
+          "relpath": "test-clean/61/70970/61-70970-0034.flac",
+          "speaker_id": "61",
+          "gain": 0.4209696581818922
+        },
+        {
+          "relpath": "test-clean/2830/3980/2830-3980-0072.flac",
+          "speaker_id": "2830",
+          "gain": 1.2596257384367129
+        }
+      ]
+    },
+    {
+      "id": "spk4_001",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/61/70968/61-70968-0000.flac",
+          "speaker_id": "61",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4970/29093/4970-29093-0001.flac",
+          "speaker_id": "4970",
+          "gain": 0.6231026902575395
+        },
+        {
+          "relpath": "test-clean/1089/134691/1089-134691-0022.flac",
+          "speaker_id": "1089",
+          "gain": 0.44253770537917
+        },
+        {
+          "relpath": "test-clean/2961/961/2961-961-0011.flac",
+          "speaker_id": "2961",
+          "gain": 1.0085015343589006
+        }
+      ]
+    },
+    {
+      "id": "spk4_002",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/2830/3979/2830-3979-0008.flac",
+          "speaker_id": "2830",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0048.flac",
+          "speaker_id": "4507",
+          "gain": 0.8672550240990117
+        },
+        {
+          "relpath": "test-clean/4077/13754/4077-13754-0005.flac",
+          "speaker_id": "4077",
+          "gain": 1.0676234410942924
+        },
+        {
+          "relpath": "test-clean/260/123440/260-123440-0004.flac",
+          "speaker_id": "260",
+          "gain": 0.9632658419325534
+        }
+      ]
+    },
+    {
+      "id": "spk4_003",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/1995/1837/1995-1837-0023.flac",
+          "speaker_id": "1995",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/3729/6852/3729-6852-0031.flac",
+          "speaker_id": "3729",
+          "gain": 1.9133970332075696
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0009.flac",
+          "speaker_id": "2094",
+          "gain": 0.5777660023982576
+        },
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0011.flac",
+          "speaker_id": "7729",
+          "gain": 0.5852265945412097
+        }
+      ]
+    },
+    {
+      "id": "spk4_004",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/3729/6852/3729-6852-0045.flac",
+          "speaker_id": "3729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0002.flac",
+          "speaker_id": "8230",
+          "gain": 0.6931515882334012
+        },
+        {
+          "relpath": "test-clean/4970/29095/4970-29095-0033.flac",
+          "speaker_id": "4970",
+          "gain": 0.7334010282343782
+        },
+        {
+          "relpath": "test-clean/5142/36377/5142-36377-0024.flac",
+          "speaker_id": "5142",
+          "gain": 1.2076671428946657
+        }
+      ]
+    },
+    {
+      "id": "spk4_005",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/672/122797/672-122797-0018.flac",
+          "speaker_id": "672",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5142/36377/5142-36377-0002.flac",
+          "speaker_id": "5142",
+          "gain": 0.3444616318016651
+        },
+        {
+          "relpath": "test-clean/8224/274384/8224-274384-0000.flac",
+          "speaker_id": "8224",
+          "gain": 0.31927092609627994
+        },
+        {
+          "relpath": "test-clean/260/123286/260-123286-0029.flac",
+          "speaker_id": "260",
+          "gain": 0.44414820323435206
+        }
+      ]
+    },
+    {
+      "id": "spk4_006",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/5142/33396/5142-33396-0007.flac",
+          "speaker_id": "5142",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1320/122612/1320-122612-0002.flac",
+          "speaker_id": "1320",
+          "gain": 0.49906693667846136
+        },
+        {
+          "relpath": "test-clean/4992/41797/4992-41797-0000.flac",
+          "speaker_id": "4992",
+          "gain": 1.1832019227165804
+        },
+        {
+          "relpath": "test-clean/908/157963/908-157963-0013.flac",
+          "speaker_id": "908",
+          "gain": 0.9645226664163994
+        }
+      ]
+    },
+    {
+      "id": "spk4_007",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0034.flac",
+          "speaker_id": "8230",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0023.flac",
+          "speaker_id": "2094",
+          "gain": 0.6425004029753856
+        },
+        {
+          "relpath": "test-clean/4446/2271/4446-2271-0009.flac",
+          "speaker_id": "4446",
+          "gain": 0.9674604544276257
+        },
+        {
+          "relpath": "test-clean/1995/1836/1995-1836-0000.flac",
+          "speaker_id": "1995",
+          "gain": 0.5406906620621781
+        }
+      ]
+    },
+    {
+      "id": "spk4_008",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/5683/32865/5683-32865-0011.flac",
+          "speaker_id": "5683",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4992/23283/4992-23283-0009.flac",
+          "speaker_id": "4992",
+          "gain": 0.8720283715098921
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0054.flac",
+          "speaker_id": "4507",
+          "gain": 0.5864104363664587
+        },
+        {
+          "relpath": "test-clean/61/70970/61-70970-0039.flac",
+          "speaker_id": "61",
+          "gain": 1.2688927298814656
+        }
+      ]
+    },
+    {
+      "id": "spk4_009",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/4992/41797/4992-41797-0013.flac",
+          "speaker_id": "4992",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1995/1826/1995-1826-0002.flac",
+          "speaker_id": "1995",
+          "gain": 1.1524184614333621
+        },
+        {
+          "relpath": "test-clean/7021/79740/7021-79740-0014.flac",
+          "speaker_id": "7021",
+          "gain": 1.2157444145897458
+        },
+        {
+          "relpath": "test-clean/7127/75946/7127-75946-0029.flac",
+          "speaker_id": "7127",
+          "gain": 2.234564978093476
+        }
+      ]
+    },
+    {
+      "id": "spk4_010",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0005.flac",
+          "speaker_id": "8455",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5639/40744/5639-40744-0015.flac",
+          "speaker_id": "5639",
+          "gain": 1.5640942993379794
+        },
+        {
+          "relpath": "test-clean/1320/122617/1320-122617-0035.flac",
+          "speaker_id": "1320",
+          "gain": 0.5550352405099885
+        },
+        {
+          "relpath": "test-clean/1284/1180/1284-1180-0017.flac",
+          "speaker_id": "1284",
+          "gain": 1.2492072532198726
+        }
+      ]
+    },
+    {
+      "id": "spk4_011",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0041.flac",
+          "speaker_id": "7729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4446/2275/4446-2275-0042.flac",
+          "speaker_id": "4446",
+          "gain": 1.9422587713976693
+        },
+        {
+          "relpath": "test-clean/6829/68771/6829-68771-0011.flac",
+          "speaker_id": "6829",
+          "gain": 1.124575308011024
+        },
+        {
+          "relpath": "test-clean/7127/75946/7127-75946-0017.flac",
+          "speaker_id": "7127",
+          "gain": 3.0787337987980554
+        }
+      ]
+    },
+    {
+      "id": "spk4_012",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/3729/6852/3729-6852-0016.flac",
+          "speaker_id": "3729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8463/294828/8463-294828-0001.flac",
+          "speaker_id": "8463",
+          "gain": 0.7825380899666282
+        },
+        {
+          "relpath": "test-clean/237/126133/237-126133-0010.flac",
+          "speaker_id": "237",
+          "gain": 1.1589361217138454
+        },
+        {
+          "relpath": "test-clean/672/122797/672-122797-0004.flac",
+          "speaker_id": "672",
+          "gain": 0.32020834763652695
+        }
+      ]
+    },
+    {
+      "id": "spk4_013",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0035.flac",
+          "speaker_id": "7729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/6829/68769/6829-68769-0036.flac",
+          "speaker_id": "6829",
+          "gain": 1.3133916150979101
+        },
+        {
+          "relpath": "test-clean/2830/3980/2830-3980-0019.flac",
+          "speaker_id": "2830",
+          "gain": 1.9756017337252427
+        },
+        {
+          "relpath": "test-clean/1995/1826/1995-1826-0020.flac",
+          "speaker_id": "1995",
+          "gain": 1.7567135760179302
+        }
+      ]
+    },
+    {
+      "id": "spk4_014",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/908/31957/908-31957-0004.flac",
+          "speaker_id": "908",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0025.flac",
+          "speaker_id": "2300",
+          "gain": 1.3245851014180565
+        },
+        {
+          "relpath": "test-clean/1580/141083/1580-141083-0035.flac",
+          "speaker_id": "1580",
+          "gain": 0.6693303030910248
+        },
+        {
+          "relpath": "test-clean/2830/3980/2830-3980-0054.flac",
+          "speaker_id": "2830",
+          "gain": 1.1287970855047744
+        }
+      ]
+    },
+    {
+      "id": "spk4_015",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/7127/75947/7127-75947-0028.flac",
+          "speaker_id": "7127",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0028.flac",
+          "speaker_id": "2300",
+          "gain": 0.8883867511753898
+        },
+        {
+          "relpath": "test-clean/8455/210777/8455-210777-0042.flac",
+          "speaker_id": "8455",
+          "gain": 1.0366182983401258
+        },
+        {
+          "relpath": "test-clean/5683/32879/5683-32879-0002.flac",
+          "speaker_id": "5683",
+          "gain": 1.307053196745456
+        }
+      ]
+    },
+    {
+      "id": "spk4_016",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/7127/75946/7127-75946-0018.flac",
+          "speaker_id": "7127",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2830/3979/2830-3979-0000.flac",
+          "speaker_id": "2830",
+          "gain": 1.2331844502573404
+        },
+        {
+          "relpath": "test-clean/8224/274381/8224-274381-0010.flac",
+          "speaker_id": "8224",
+          "gain": 1.1079327431139268
+        },
+        {
+          "relpath": "test-clean/908/31957/908-31957-0023.flac",
+          "speaker_id": "908",
+          "gain": 1.0840246887734677
+        }
+      ]
+    },
+    {
+      "id": "spk4_017",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/121/127105/121-127105-0029.flac",
+          "speaker_id": "121",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0011.flac",
+          "speaker_id": "7729",
+          "gain": 0.5452876942564404
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0025.flac",
+          "speaker_id": "2300",
+          "gain": 0.7739313969475607
+        },
+        {
+          "relpath": "test-clean/3729/6852/3729-6852-0046.flac",
+          "speaker_id": "3729",
+          "gain": 1.05563566375686
+        }
+      ]
+    },
+    {
+      "id": "spk4_018",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/1320/122617/1320-122617-0000.flac",
+          "speaker_id": "1320",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0010.flac",
+          "speaker_id": "7729",
+          "gain": 0.5295606562854208
+        },
+        {
+          "relpath": "test-clean/121/121726/121-121726-0002.flac",
+          "speaker_id": "121",
+          "gain": 1.7915418672309613
+        },
+        {
+          "relpath": "test-clean/1284/1180/1284-1180-0023.flac",
+          "speaker_id": "1284",
+          "gain": 0.7443230649630964
+        }
+      ]
+    },
+    {
+      "id": "spk4_019",
+      "num_speakers": 4,
+      "sources": [
+        {
+          "relpath": "test-clean/237/134493/237-134493-0017.flac",
+          "speaker_id": "237",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0025.flac",
+          "speaker_id": "2300",
+          "gain": 0.9077323357230489
+        },
+        {
+          "relpath": "test-clean/6930/76324/6930-76324-0028.flac",
+          "speaker_id": "6930",
+          "gain": 1.6693520115470133
+        },
+        {
+          "relpath": "test-clean/5142/36377/5142-36377-0013.flac",
+          "speaker_id": "5142",
+          "gain": 3.114582589740676
+        }
+      ]
+    },
+    {
+      "id": "spk5_000",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0021.flac",
+          "speaker_id": "7729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8555/284449/8555-284449-0019.flac",
+          "speaker_id": "8555",
+          "gain": 2.507159268646645
+        },
+        {
+          "relpath": "test-clean/1284/1181/1284-1181-0013.flac",
+          "speaker_id": "1284",
+          "gain": 1.830799357569068
+        },
+        {
+          "relpath": "test-clean/672/122797/672-122797-0036.flac",
+          "speaker_id": "672",
+          "gain": 1.112742098340452
+        },
+        {
+          "relpath": "test-clean/2961/961/2961-961-0008.flac",
+          "speaker_id": "2961",
+          "gain": 1.457071825543518
+        }
+      ]
+    },
+    {
+      "id": "spk5_001",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0043.flac",
+          "speaker_id": "1188",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1089/134686/1089-134686-0020.flac",
+          "speaker_id": "1089",
+          "gain": 2.1210849413553983
+        },
+        {
+          "relpath": "test-clean/260/123288/260-123288-0001.flac",
+          "speaker_id": "260",
+          "gain": 2.003862388717786
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0010.flac",
+          "speaker_id": "4507",
+          "gain": 1.0605555143208885
+        },
+        {
+          "relpath": "test-clean/7176/92135/7176-92135-0015.flac",
+          "speaker_id": "7176",
+          "gain": 0.7539754219078929
+        }
+      ]
+    },
+    {
+      "id": "spk5_002",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/5639/40744/5639-40744-0021.flac",
+          "speaker_id": "5639",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1221/135767/1221-135767-0007.flac",
+          "speaker_id": "1221",
+          "gain": 0.9241693077686074
+        },
+        {
+          "relpath": "test-clean/237/126133/237-126133-0003.flac",
+          "speaker_id": "237",
+          "gain": 0.8737761576564409
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0002.flac",
+          "speaker_id": "2094",
+          "gain": 0.4028605274456049
+        },
+        {
+          "relpath": "test-clean/3575/170457/3575-170457-0037.flac",
+          "speaker_id": "3575",
+          "gain": 0.4995207597900348
+        }
+      ]
+    },
+    {
+      "id": "spk5_003",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0030.flac",
+          "speaker_id": "2300",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5105/28240/5105-28240-0016.flac",
+          "speaker_id": "5105",
+          "gain": 2.2271283898427963
+        },
+        {
+          "relpath": "test-clean/61/70968/61-70968-0050.flac",
+          "speaker_id": "61",
+          "gain": 1.3717560648814795
+        },
+        {
+          "relpath": "test-clean/121/121726/121-121726-0003.flac",
+          "speaker_id": "121",
+          "gain": 0.8523632709686351
+        },
+        {
+          "relpath": "test-clean/908/157963/908-157963-0009.flac",
+          "speaker_id": "908",
+          "gain": 1.5843869567464284
+        }
+      ]
+    },
+    {
+      "id": "spk5_004",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/4970/29095/4970-29095-0009.flac",
+          "speaker_id": "4970",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1580/141084/1580-141084-0041.flac",
+          "speaker_id": "1580",
+          "gain": 1.2552192258630646
+        },
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0035.flac",
+          "speaker_id": "8230",
+          "gain": 0.8165517582620905
+        },
+        {
+          "relpath": "test-clean/5105/28233/5105-28233-0007.flac",
+          "speaker_id": "5105",
+          "gain": 1.3378920786533308
+        },
+        {
+          "relpath": "test-clean/2830/3979/2830-3979-0003.flac",
+          "speaker_id": "2830",
+          "gain": 0.7027292993599373
+        }
+      ]
+    },
+    {
+      "id": "spk5_005",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/1995/1826/1995-1826-0026.flac",
+          "speaker_id": "1995",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/908/31957/908-31957-0025.flac",
+          "speaker_id": "908",
+          "gain": 2.3261884439198814
+        },
+        {
+          "relpath": "test-clean/4446/2275/4446-2275-0040.flac",
+          "speaker_id": "4446",
+          "gain": 2.2863006556995122
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0009.flac",
+          "speaker_id": "2094",
+          "gain": 0.6169237357005503
+        },
+        {
+          "relpath": "test-clean/5639/40744/5639-40744-0036.flac",
+          "speaker_id": "5639",
+          "gain": 1.5945891831569285
+        }
+      ]
+    },
+    {
+      "id": "spk5_006",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/5142/33396/5142-33396-0007.flac",
+          "speaker_id": "5142",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2830/3979/2830-3979-0002.flac",
+          "speaker_id": "2830",
+          "gain": 2.5036731137322303
+        },
+        {
+          "relpath": "test-clean/6930/76324/6930-76324-0025.flac",
+          "speaker_id": "6930",
+          "gain": 2.052655466621196
+        },
+        {
+          "relpath": "test-clean/5105/28240/5105-28240-0005.flac",
+          "speaker_id": "5105",
+          "gain": 1.4564661034566049
+        },
+        {
+          "relpath": "test-clean/1284/1180/1284-1180-0001.flac",
+          "speaker_id": "1284",
+          "gain": 0.7725127299376542
+        }
+      ]
+    },
+    {
+      "id": "spk5_007",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/1320/122612/1320-122612-0007.flac",
+          "speaker_id": "1320",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/7176/88083/7176-88083-0010.flac",
+          "speaker_id": "7176",
+          "gain": 1.0391615893539765
+        },
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0030.flac",
+          "speaker_id": "7729",
+          "gain": 0.7595762118949235
+        },
+        {
+          "relpath": "test-clean/61/70970/61-70970-0038.flac",
+          "speaker_id": "61",
+          "gain": 0.8747595425096402
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0055.flac",
+          "speaker_id": "4507",
+          "gain": 0.8443227675769118
+        }
+      ]
+    },
+    {
+      "id": "spk5_008",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/61/70970/61-70970-0018.flac",
+          "speaker_id": "61",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0027.flac",
+          "speaker_id": "2300",
+          "gain": 1.10558717446333
+        },
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0001.flac",
+          "speaker_id": "1188",
+          "gain": 1.0615646821680023
+        },
+        {
+          "relpath": "test-clean/6829/68769/6829-68769-0053.flac",
+          "speaker_id": "6829",
+          "gain": 0.44159716819135236
+        },
+        {
+          "relpath": "test-clean/672/122797/672-122797-0025.flac",
+          "speaker_id": "672",
+          "gain": 0.9058272966686746
+        }
+      ]
+    },
+    {
+      "id": "spk5_009",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0025.flac",
+          "speaker_id": "1188",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5105/28233/5105-28233-0004.flac",
+          "speaker_id": "5105",
+          "gain": 0.8433281836552056
+        },
+        {
+          "relpath": "test-clean/260/123288/260-123288-0027.flac",
+          "speaker_id": "260",
+          "gain": 1.260298201191543
+        },
+        {
+          "relpath": "test-clean/1089/134686/1089-134686-0011.flac",
+          "speaker_id": "1089",
+          "gain": 1.9352251766845363
+        },
+        {
+          "relpath": "test-clean/3570/5694/3570-5694-0014.flac",
+          "speaker_id": "3570",
+          "gain": 1.4248978275802477
+        }
+      ]
+    },
+    {
+      "id": "spk5_010",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/1089/134686/1089-134686-0018.flac",
+          "speaker_id": "1089",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/4446/2271/4446-2271-0020.flac",
+          "speaker_id": "4446",
+          "gain": 0.7694764168703551
+        },
+        {
+          "relpath": "test-clean/5142/33396/5142-33396-0034.flac",
+          "speaker_id": "5142",
+          "gain": 1.3622317222588032
+        },
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0033.flac",
+          "speaker_id": "1188",
+          "gain": 0.6934848028447244
+        },
+        {
+          "relpath": "test-clean/8555/284447/8555-284447-0007.flac",
+          "speaker_id": "8555",
+          "gain": 0.5310121820176363
+        }
+      ]
+    },
+    {
+      "id": "spk5_011",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/2961/960/2961-960-0018.flac",
+          "speaker_id": "2961",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/5142/36377/5142-36377-0017.flac",
+          "speaker_id": "5142",
+          "gain": 1.3833792366517694
+        },
+        {
+          "relpath": "test-clean/4992/41806/4992-41806-0006.flac",
+          "speaker_id": "4992",
+          "gain": 0.6878871500005657
+        },
+        {
+          "relpath": "test-clean/7021/79759/7021-79759-0000.flac",
+          "speaker_id": "7021",
+          "gain": 0.9177097339063063
+        },
+        {
+          "relpath": "test-clean/4446/2273/4446-2273-0001.flac",
+          "speaker_id": "4446",
+          "gain": 1.0283449320308573
+        }
+      ]
+    },
+    {
+      "id": "spk5_012",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/5639/40744/5639-40744-0035.flac",
+          "speaker_id": "5639",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0016.flac",
+          "speaker_id": "2300",
+          "gain": 0.2599330347306282
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0023.flac",
+          "speaker_id": "2094",
+          "gain": 0.5449286745540963
+        },
+        {
+          "relpath": "test-clean/3570/5694/3570-5694-0011.flac",
+          "speaker_id": "3570",
+          "gain": 0.6529176170903237
+        },
+        {
+          "relpath": "test-clean/4970/29095/4970-29095-0002.flac",
+          "speaker_id": "4970",
+          "gain": 0.7991213806401424
+        }
+      ]
+    },
+    {
+      "id": "spk5_013",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/5683/32879/5683-32879-0006.flac",
+          "speaker_id": "5683",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1284/1180/1284-1180-0031.flac",
+          "speaker_id": "1284",
+          "gain": 0.4833658617640778
+        },
+        {
+          "relpath": "test-clean/2094/142345/2094-142345-0011.flac",
+          "speaker_id": "2094",
+          "gain": 0.4754262107012049
+        },
+        {
+          "relpath": "test-clean/61/70970/61-70970-0004.flac",
+          "speaker_id": "61",
+          "gain": 0.5053589675074286
+        },
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0045.flac",
+          "speaker_id": "4507",
+          "gain": 1.078268922217092
+        }
+      ]
+    },
+    {
+      "id": "spk5_014",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/7729/102255/7729-102255-0029.flac",
+          "speaker_id": "7729",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1221/135767/1221-135767-0006.flac",
+          "speaker_id": "1221",
+          "gain": 1.4655020262700538
+        },
+        {
+          "relpath": "test-clean/5639/40744/5639-40744-0031.flac",
+          "speaker_id": "5639",
+          "gain": 2.013935121165716
+        },
+        {
+          "relpath": "test-clean/61/70968/61-70968-0023.flac",
+          "speaker_id": "61",
+          "gain": 1.5237600052232623
+        },
+        {
+          "relpath": "test-clean/1089/134686/1089-134686-0028.flac",
+          "speaker_id": "1089",
+          "gain": 1.2511060096568711
+        }
+      ]
+    },
+    {
+      "id": "spk5_015",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/4077/13754/4077-13754-0008.flac",
+          "speaker_id": "4077",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1995/1836/1995-1836-0008.flac",
+          "speaker_id": "1995",
+          "gain": 0.3648008609227439
+        },
+        {
+          "relpath": "test-clean/8230/279154/8230-279154-0014.flac",
+          "speaker_id": "8230",
+          "gain": 0.9196129978931351
+        },
+        {
+          "relpath": "test-clean/8555/284449/8555-284449-0008.flac",
+          "speaker_id": "8555",
+          "gain": 0.6003134670579531
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0028.flac",
+          "speaker_id": "2300",
+          "gain": 0.5357648268609111
+        }
+      ]
+    },
+    {
+      "id": "spk5_016",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/5105/28240/5105-28240-0007.flac",
+          "speaker_id": "5105",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/6930/75918/6930-75918-0001.flac",
+          "speaker_id": "6930",
+          "gain": 1.8268313703528287
+        },
+        {
+          "relpath": "test-clean/1320/122617/1320-122617-0032.flac",
+          "speaker_id": "1320",
+          "gain": 0.6199063166353515
+        },
+        {
+          "relpath": "test-clean/7021/85628/7021-85628-0005.flac",
+          "speaker_id": "7021",
+          "gain": 0.4707730423095149
+        },
+        {
+          "relpath": "test-clean/2961/961/2961-961-0017.flac",
+          "speaker_id": "2961",
+          "gain": 3.3285526067098403
+        }
+      ]
+    },
+    {
+      "id": "spk5_017",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/4507/16021/4507-16021-0048.flac",
+          "speaker_id": "4507",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8224/274381/8224-274381-0002.flac",
+          "speaker_id": "8224",
+          "gain": 1.3219403391423121
+        },
+        {
+          "relpath": "test-clean/8555/292519/8555-292519-0009.flac",
+          "speaker_id": "8555",
+          "gain": 0.733623587555877
+        },
+        {
+          "relpath": "test-clean/2300/131720/2300-131720-0032.flac",
+          "speaker_id": "2300",
+          "gain": 0.5275647086815579
+        },
+        {
+          "relpath": "test-clean/672/122797/672-122797-0069.flac",
+          "speaker_id": "672",
+          "gain": 1.4987823342328415
+        }
+      ]
+    },
+    {
+      "id": "spk5_018",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/1188/133604/1188-133604-0018.flac",
+          "speaker_id": "1188",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/1995/1836/1995-1836-0008.flac",
+          "speaker_id": "1995",
+          "gain": 0.8083312611991605
+        },
+        {
+          "relpath": "test-clean/4077/13754/4077-13754-0013.flac",
+          "speaker_id": "4077",
+          "gain": 0.9568718197071542
+        },
+        {
+          "relpath": "test-clean/121/127105/121-127105-0028.flac",
+          "speaker_id": "121",
+          "gain": 0.9093293799633989
+        },
+        {
+          "relpath": "test-clean/1089/134691/1089-134691-0025.flac",
+          "speaker_id": "1089",
+          "gain": 1.0339156269354222
+        }
+      ]
+    },
+    {
+      "id": "spk5_019",
+      "num_speakers": 5,
+      "sources": [
+        {
+          "relpath": "test-clean/2830/3980/2830-3980-0076.flac",
+          "speaker_id": "2830",
+          "gain": 1.0
+        },
+        {
+          "relpath": "test-clean/8555/284447/8555-284447-0020.flac",
+          "speaker_id": "8555",
+          "gain": 0.9564437005911803
+        },
+        {
+          "relpath": "test-clean/1320/122617/1320-122617-0005.flac",
+          "speaker_id": "1320",
+          "gain": 1.1267612718112263
+        },
+        {
+          "relpath": "test-clean/121/127105/121-127105-0025.flac",
+          "speaker_id": "121",
+          "gain": 1.9490954355668682
+        },
+        {
+          "relpath": "test-clean/1284/1180/1284-1180-0025.flac",
+          "speaker_id": "1284",
+          "gain": 1.4452207658395961
+        }
+      ]
+    }
+  ]
+}
