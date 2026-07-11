@@ -132,10 +132,10 @@ These are the numbers every future model must beat on the same frozen mixtures. 
 The clean-trained SepFormer degrades gracefully under additive noise but collapses under reverberation. This quantifies the Phase 5 robustness gap and says reverb is the priority target. Condition rows are logged in `experiments/eval_set_conditions.csv`. Variant manifests: `data/eval_manifest_noise.json`, `data/eval_manifest_reverb.json`, and a 16 kHz clean set in `data/eval_manifest_16k.json`.
 
 ## Phase 3, Train our own models, week 3 to 6 (the core)
-- [ ] Priority: fine-tune pretrained models (SepFormer, and ClearerVoice/MossFormer2) rather than training from scratch. For the time we have, fine-tuning gives the best results
-- [ ] Optional learning warm-up: train Conv-TasNet on Libri2Mix (Asteroid recipe) to understand PIT end-to-end in about 1 GPU-day. Skip if short on time
-- [ ] Baseline track: fine-tune pretrained SepFormer (libri3mix) on our Libri3Mix with standard utterance-level PIT and fixed 3 outputs. This is the comparison point, not the final system
-- [ ] Headline track, SepFormer + OR-PIT (the team's proposal, and the right call). Retrain SepFormer with a 2-head "one and rest" output: head 1 is one speaker, head 2 is the sum of all remaining speakers.
+- [x] Priority: fine-tune pretrained models rather than training from scratch. Adopted: the OR-PIT headline track warm-starts from wsj02mix and the baseline track warm-starts from libri3mix; both fine-tune rather than train from zero
+- [x] Optional learning warm-up: Conv-TasNet trained from scratch with standard PIT (torchaudio ConvTasNet, so no Asteroid install) via `src/train/train_convtasnet.py`. A short 6000-step run reaches about 5.0 dB SI-SDRi on the 2-speaker frozen level. The PIT pipeline works end to end; from scratch it is nowhere near converged (Conv-TasNet needs roughly a GPU-day). Purpose (understand PIT end to end) achieved
+- [x] Baseline track: uPIT fine-tune of libri3mix (fixed 3 outputs) via `src/train/train_pit.py` and `src/train/pit_loss.py`. Result on the frozen 3-speaker level: 18.65 dB SI-SDRi, slightly BELOW the pretrained libri3mix (19.33 dB). Honest finding: libri3mix is already LibriSpeech-trained, so a short further fine-tune on our mixtures does not help (unlike OR-PIT from wsj02mix, which gained 1.5 dB because wsj02mix was WSJ-trained). The pretrained libri3mix stays our 3-speaker reference
+- [x] Headline track, SepFormer + OR-PIT (the team's proposal, and the right call). Built and verified: 2-head "one and rest" model fine-tuned from wsj02mix, beating the baseline on the 2-speaker level. Details in the sub-bullets below.
   - IMPORTANT: OR-PIT is a training objective plus an output topology, NOT an inference-time switch. The pretrained uPIT checkpoints cannot do it as-is; this track requires real training
   - [x] Warm-start from `speechbrain/sepformer-wsj02mix` (already 2 output heads). Implemented in `src/train/train_orpit.py` (plain PyTorch, re-enables grad on the inference-loaded modules)
   - [x] OR-PIT loss implemented in `src/train/orpit_loss.py`: one-and-rest SI-SNR that tries every "one" speaker and both head assignments and keeps the best
@@ -149,6 +149,17 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
 - [ ] VRAM note: SepFormer is heavy. On 16 GB use 8 kHz, short segments (about 3 s), small batch plus gradient accumulation
 - [ ] Optionally add Weights & Biases (free tier) for run tracking now that training is underway; keep the CSV logs as the source of truth
 - [ ] Deliverable: one OR-PIT SepFormer that separates 2 to 5 speakers, plus fixed-N baselines to compare it against
+
+### Phase 3 training results so far (frozen eval set, 20 mixtures per level, 8 kHz)
+| Model | Level | SI-SDRi (dB) | PESQ | STOI | vs its baseline |
+|---|---|---|---|---|---|
+| sepformer-wsj02mix (pretrained) | 2 spk | 17.35 | 3.37 | 0.96 | baseline |
+| OR-PIT 6k (from wsj02mix) | 2 spk | 18.82 | 3.51 | 0.97 | +1.5 dB, helps |
+| sepformer-libri3mix (pretrained) | 3 spk | 19.33 | 3.20 | 0.93 | baseline |
+| uPIT 6k (from libri3mix) | 3 spk | 18.65 | 3.11 | 0.93 | -0.7 dB, no gain |
+| Conv-TasNet 6k (from scratch) | 2 spk | 5.04 | 1.76 | 0.78 | learning demo, unconverged |
+
+Reading: fine-tuning helps when the pretrained start is out-of-domain (OR-PIT from WSJ-trained wsj02mix gains on LibriSpeech), but not when it is already in-domain (libri3mix was LibriSpeech-trained). So the OR-PIT model is the one to carry into Phase 4; the pretrained libri3mix stays the fixed-3 reference. All rows logged in `experiments/eval_set_results.csv`.
 
 ## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
 Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost. Both the external review and the team's own paper survey converge on recursive separation as the primary route, so that is what we build.
