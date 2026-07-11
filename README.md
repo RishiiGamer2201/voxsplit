@@ -12,7 +12,7 @@ summary and phase-by-phase roadmap.
 - [x] Phase 0, environment and GPU verified
 - [x] Phase 1, pretrained baselines compared. Best 3-spk: SepFormer libri3mix (mean SI-SDRi about 18.6 dB). Best 2-spk: MossFormer2 (about 20.2 dB). See PLAN.md for the table
 - [x] Phase 2, frozen eval set (2 to 5 spk, 80 mixtures) plus WHAM-noise, reverb, and 16 kHz variants, all reproducible from committed manifests
-- [ ] Phase 3, train our own models
+- [ ] Phase 3, OR-PIT training pipeline built and verified on GPU (warm-started SepFormer at ~12 to 14 dB SI-SNRi); full fine-tuning run in progress
 - [ ] Phase 4, unknown speaker count
 - [ ] Phase 5, real-world robustness
 - [ ] Phase 6, addons (demo, transcription, audio-visual)

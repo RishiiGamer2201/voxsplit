@@ -137,10 +137,11 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
 - [ ] Baseline track: fine-tune pretrained SepFormer (libri3mix) on our Libri3Mix with standard utterance-level PIT and fixed 3 outputs. This is the comparison point, not the final system
 - [ ] Headline track, SepFormer + OR-PIT (the team's proposal, and the right call). Retrain SepFormer with a 2-head "one and rest" output: head 1 is one speaker, head 2 is the sum of all remaining speakers.
   - IMPORTANT: OR-PIT is a training objective plus an output topology, NOT an inference-time switch. The pretrained uPIT checkpoints cannot do it as-is; this track requires real training
-  - [ ] Warm-start from `speechbrain/sepformer-wsj02mix`, which already has exactly 2 output heads. Redefine target 2 as the residual mixture instead of "speaker 2"
-  - [ ] OR-PIT loss: choose the permutation (which speaker is the "one") that minimizes SI-SDR loss on head 1, with head 2 scored against the sum of the rest
-  - [ ] Train on a mix of 2 and 3-speaker data so recursion depth varies. Takahashi et al. trained on 2 and 3 speakers and generalized to 4 (arXiv:1904.03065)
-  - [ ] Precedent: transformer/SepFormer-style extraction blocks trained with OR-PIT are published, so this is not unexplored territory (Deflationary Extraction Transformer, https://doi.org/10.3390/s25164905)
+  - [x] Warm-start from `speechbrain/sepformer-wsj02mix` (already 2 output heads). Implemented in `src/train/train_orpit.py` (plain PyTorch, re-enables grad on the inference-loaded modules)
+  - [x] OR-PIT loss implemented in `src/train/orpit_loss.py`: one-and-rest SI-SNR that tries every "one" speaker and both head assignments and keeps the best
+  - [x] Dynamic 2 and 3-speaker training mixtures from train-clean-100 (`src/train/mix_dataset.py`). Pipeline VERIFIED on the RTX 5070 Ti: warm-started model already sits at about 12 to 14 dB SI-SNRi and the OR-PIT loss trains cleanly. Full fine-tuning run launched
+  - [x] Precedent: transformer/SepFormer-style extraction blocks trained with OR-PIT are published, so this is not unexplored territory (Deflationary Extraction Transformer, https://doi.org/10.3390/s25164905)
+  - [ ] Still to do: run to convergence (multi-hour to multi-day), then evaluate the fine-tuned model (2-speaker directly here; 3-or-more via the Phase 4 recursion)
 - [ ] Optional fixed-N comparison models: 4-speaker and 5-speaker uPIT models (fresh output heads, warm-start from the 3-spk checkpoint), purely to benchmark OR-PIT against
 - [ ] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025)
 - [ ] Loss and tracking: SI-SDR; track SI-SDRi per level on the frozen sets
