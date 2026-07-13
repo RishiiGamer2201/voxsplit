@@ -4,3 +4,6 @@ timestamp,tag,num_speakers,num_mixtures,mean_si_sdr,mean_si_sdri,mean_pesq,mean_
 2026-07-11T11:18:00,orpit-6k,2,20,18.8231,18.8168,3.5108,0.9671
 2026-07-11T11:55:19,pit_libri3mix_6k,3,20,15.3996,18.6544,3.1050,0.9275
 2026-07-11T12:07:58,convtasnet_6k,2,20,5.0489,5.0426,1.7581,0.7818
+2026-07-13T20:47:22,orpit_6k_recursive_oracle,3,20,10.3774,13.6322,2.5616,0.8748
+2026-07-13T20:47:22,orpit_6k_recursive_oracle,4,20,2.5241,7.7787,1.8021,0.7041
+2026-07-13T20:47:22,orpit_6k_recursive_oracle,5,20,-0.7950,5.8477,1.5991,0.6181

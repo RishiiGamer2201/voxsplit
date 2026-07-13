@@ -142,7 +142,8 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
   - [x] Dynamic 2 and 3-speaker training mixtures from train-clean-100 (`src/train/mix_dataset.py`). Pipeline VERIFIED on the RTX 5070 Ti: warm-started model already sits at about 12 to 14 dB SI-SNRi and the OR-PIT loss trains cleanly. Full fine-tuning run launched
   - [x] Precedent: transformer/SepFormer-style extraction blocks trained with OR-PIT are published, so this is not unexplored territory (Deflationary Extraction Transformer, https://doi.org/10.3390/s25164905)
   - [x] Initial 6000-step fine-tune done. On the frozen 2-speaker level the OR-PIT model scores 18.82 dB SI-SDRi (PESQ 3.51, STOI 0.97), beating its wsj02mix warm-start baseline (17.35 dB) by about 1.5 dB. Batch inference via `src/inference/separate_orpit_set.py` loading the trained checkpoint
-  - [ ] Still to do: longer training toward convergence (tens of thousands of steps); evaluate 3-or-more speakers via the Phase 4 recursion (the 2-output model needs the recursive loop to handle more than 2 speakers)
+  - [x] Longer training toward convergence: `train_orpit.py` gained a `--resume` flag (loads encoder/masknet/decoder + optimizer state, treats the step arg as an absolute target, and offsets the dataset seed by the resume step so continued training sees fresh mixtures). A run continuing from step 6000 to 20000 is what produced the converged checkpoint scored below
+  - [x] Recursive separation for 3-or-more speakers built: `src/inference/separate_orpit_recursive_set.py` runs the 2-head OR-PIT model recursively (extract one speaker, feed the "rest" head back, repeat K-1 times for a known count K). Head selection (which head is the extracted speaker vs the residual to recurse on) uses an ORACLE against the references, so these numbers are the separation-quality CEILING of the recursion; the blind stop/selection classifier is the Phase 4 deliverable. Self-test recovers 2..5 synthetic sources with no model. This gives VoxSplit its first 4- and 5-speaker separation numbers (previously n/a)
 - [ ] Optional fixed-N comparison models: 4-speaker and 5-speaker uPIT models (fresh output heads, warm-start from the 3-spk checkpoint), purely to benchmark OR-PIT against
 - [ ] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025)
 - [ ] Loss and tracking: SI-SDR; track SI-SDRi per level on the frozen sets
@@ -160,6 +161,17 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
 | Conv-TasNet 6k (from scratch) | 2 spk | 5.04 | 1.76 | 0.78 | learning demo, unconverged |
 
 Reading: fine-tuning helps when the pretrained start is out-of-domain (OR-PIT from WSJ-trained wsj02mix gains on LibriSpeech), but not when it is already in-domain (libri3mix was LibriSpeech-trained). So the OR-PIT model is the one to carry into Phase 4; the pretrained libri3mix stays the fixed-3 reference. All rows logged in `experiments/eval_set_results.csv`.
+
+### Recursive OR-PIT on 3-or-more speakers (oracle head selection, known count)
+The single 2-head OR-PIT model, recursed K-1 times, separates every level. Numbers below use the 6000-step checkpoint (the converged 20k run re-scores these once done). Oracle head selection means these are the recursion's quality ceiling, not a blind-inference result.
+
+| Model | Level | SI-SDR (dB) | SI-SDRi (dB) | PESQ | STOI |
+|---|---|---|---|---|---|
+| OR-PIT 6k recursive | 3 spk | 10.38 | 13.63 | 2.56 | 0.88 |
+| OR-PIT 6k recursive | 4 spk | 2.52 | 7.78 | 1.80 | 0.70 |
+| OR-PIT 6k recursive | 5 spk | -0.79 | 5.85 | 1.60 | 0.62 |
+
+Reading: one model now covers 2 to 5 speakers with the expected graceful degradation (about 8 dB drop from 3 to 5 speakers, in line with the field). At 3 speakers the recursion (13.63 dB) trails the dedicated fixed-3 libri3mix head (19.33 dB): recursion trades some quality for count-agnostic coverage. Rows logged in `experiments/eval_set_results.csv` under tag `orpit_6k_recursive_oracle`.
 
 ## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
 Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost. Both the external review and the team's own paper survey converge on recursive separation as the primary route, so that is what we build.

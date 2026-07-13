@@ -190,6 +190,11 @@ def main() -> int:
                         help="Random seed for the dataset and torch.")
     parser.add_argument("--num-workers", type=int, default=0,
                         help="DataLoader worker processes.")
+    parser.add_argument("--resume", type=Path, default=None,
+                        help="Checkpoint from a previous run to continue from. "
+                             "Loads encoder/masknet/decoder and optimizer "
+                             "state and treats --max-steps/--epochs*--steps "
+                             "as the ABSOLUTE target step to train up to.")
     args = parser.parse_args()
 
     if not args.source_dir.is_dir():
@@ -211,14 +216,34 @@ def main() -> int:
     print(f"Warm-starting from {args.init_model} ...")
     encoder, masknet, decoder = load_warm_start(args.init_model, device)
 
-    # A generous dataset length so the DataLoader never runs dry.
+    # Resume: load module weights from a previous checkpoint and continue.
+    resume_ckpt = None
+    start_step = 0
+    if args.resume is not None:
+        if not args.resume.is_file():
+            print(f"Resume checkpoint not found: {args.resume}")
+            return 1
+        resume_ckpt = torch.load(str(args.resume), map_location=device)
+        encoder.load_state_dict(resume_ckpt["encoder"])
+        masknet.load_state_dict(resume_ckpt["masknet"])
+        decoder.load_state_dict(resume_ckpt["decoder"])
+        start_step = int(resume_ckpt.get("step", 0))
+        print(f"Resumed weights from {args.resume} at step {start_step}; "
+              f"training up to absolute step {total_steps}.")
+        if start_step >= total_steps:
+            print("Nothing to do: resume step already >= target steps.")
+            return 0
+
+    # A generous dataset length so the DataLoader never runs dry. On resume,
+    # offset the seed by start_step so continued training sees fresh mixtures
+    # rather than replaying the first run's samples.
     ds_length = max(total_steps * args.batch_size * 2, args.batch_size * 4)
     dataset = MixDataset(
         source_dir=args.source_dir,
         sample_rate=args.sample_rate,
         segment_seconds=args.segment_seconds,
         speaker_counts=speaker_counts,
-        seed=args.seed,
+        seed=args.seed + start_step,
         length=ds_length,
     )
     print(f"Dataset scanned {len(dataset.speakers)} speakers.")
@@ -236,6 +261,8 @@ def main() -> int:
               + list(masknet.parameters())
               + list(decoder.parameters()))
     optimizer = torch.optim.Adam(params, lr=args.lr)
+    if resume_ckpt is not None and "optimizer" in resume_ckpt:
+        optimizer.load_state_dict(resume_ckpt["optimizer"])
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = args.out_dir / "train_log.csv"
@@ -250,7 +277,7 @@ def main() -> int:
     running_loss = 0.0
     running_si_snri = 0.0
     running_count = 0
-    step = 0
+    step = start_step
     stop = False
 
     while not stop:
