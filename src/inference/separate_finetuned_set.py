@@ -36,7 +36,7 @@ import torchaudio.functional as AF
 # Reuse the generalized forward and the lazy-module fix from the trainers.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "train"))
 from train_orpit import neutralize_lazy_modules  # noqa: E402
-from train_pit import sepformer_forward  # noqa: E402
+from train_pit import sepformer_forward, expand_masknet_heads  # noqa: E402
 
 MODEL_SR = 8000
 
@@ -76,6 +76,9 @@ def separate_sepformer(matching, args, device) -> int:
     encoder = sep.mods.encoder
     masknet = sep.mods.masknet
     decoder = sep.mods.decoder
+    # If the checkpoint has more heads than the init arch (4/5-spk models
+    # warm-started from 3-head libri3mix), expand the masknet to match.
+    expand_masknet_heads(masknet, args.num_speakers)
     encoder.load_state_dict(ckpt["encoder"])
     masknet.load_state_dict(ckpt["masknet"])
     decoder.load_state_dict(ckpt["decoder"])

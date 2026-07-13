@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mix_dataset import MixDataset, collate  # noqa: E402
 from orpit_loss import batch_orpit_loss, si_snr  # noqa: E402
+from wandb_logger import WandbLogger  # noqa: E402
 
 
 def resolve_device(device: str) -> str:
@@ -195,6 +196,14 @@ def main() -> int:
                              "Loads encoder/masknet/decoder and optimizer "
                              "state and treats --max-steps/--epochs*--steps "
                              "as the ABSOLUTE target step to train up to.")
+    parser.add_argument("--wandb", action="store_true",
+                        help="Also log to Weights & Biases (off by default; "
+                             "CSV stays the source of truth).")
+    parser.add_argument("--wandb-project", default="voxsplit",
+                        help="W&B project name when --wandb is set.")
+    parser.add_argument("--wandb-mode", default="offline",
+                        choices=["offline", "online", "disabled"],
+                        help="W&B mode; offline needs no account.")
     args = parser.parse_args()
 
     if not args.source_dir.is_dir():
@@ -274,6 +283,10 @@ def main() -> int:
             ["step", "loss", "running_loss", "running_si_snri"])
         csv_fh.flush()
 
+    wandb_log = WandbLogger(
+        enabled=args.wandb, project=args.wandb_project, mode=args.wandb_mode,
+        config=vars(args), name=f"orpit_to{total_steps}")
+
     running_loss = 0.0
     running_si_snri = 0.0
     running_count = 0
@@ -320,6 +333,9 @@ def main() -> int:
                                      f"{mean_loss:.6f}",
                                      f"{mean_si_snri:.6f}"])
                 csv_fh.flush()
+                wandb_log.log({"loss": float(loss),
+                               "running_loss": mean_loss,
+                               "running_si_snri": mean_si_snri}, step=step)
                 running_loss = 0.0
                 running_si_snri = 0.0
                 running_count = 0
@@ -338,6 +354,7 @@ def main() -> int:
                            optimizer)
     print(f"Saved final checkpoint: {path}")
     csv_fh.close()
+    wandb_log.finish()
     print(f"Training complete. Log at {csv_path}")
     return 0
 

@@ -33,14 +33,53 @@ from mix_dataset import MixDataset, collate  # noqa: E402
 from orpit_loss import si_snr  # noqa: E402
 from pit_loss import batch_pit_loss  # noqa: E402
 from train_orpit import neutralize_lazy_modules, resolve_device  # noqa: E402
+from wandb_logger import WandbLogger  # noqa: E402
+
+
+def expand_masknet_heads(masknet, num_speakers: int) -> None:
+    """Re-shape a SepFormer Dual_Path_Model masknet to num_speakers heads.
+
+    The per-speaker head count lives only in masknet.num_spks and in the
+    conv2d output channels (out = base * num_spks, where base is the model
+    dimension). To go from the pretrained head count to num_speakers, this
+    builds a new conv2d and warm-starts every new head by copying an existing
+    head (cycled), so the extra heads start as duplicates of real speaker
+    heads rather than random noise, which trains far faster. A no-op if the
+    head count already matches.
+    """
+    import torch.nn as nn
+
+    old = masknet.conv2d
+    old_spks = int(masknet.num_spks)
+    if old_spks == num_speakers:
+        return
+    base = old.out_channels // old_spks
+    device = old.weight.device
+    new = nn.Conv2d(old.in_channels, base * num_speakers,
+                    kernel_size=old.kernel_size, stride=old.stride).to(device)
+    with torch.no_grad():
+        for i in range(num_speakers):
+            src = i % old_spks
+            new.weight[i * base:(i + 1) * base] = \
+                old.weight[src * base:(src + 1) * base]
+            if old.bias is not None and new.bias is not None:
+                new.bias[i * base:(i + 1) * base] = \
+                    old.bias[src * base:(src + 1) * base]
+    masknet.conv2d = new
+    masknet.num_spks = num_speakers
+    print(f"Expanded masknet heads {old_spks} -> {num_speakers} "
+          f"(copied existing heads as warm start).")
 
 
 def load_warm_start(init_model: str, num_speakers: int, device: str):
     """Load the pretrained N-output SepFormer submodules for fine-tuning.
 
     The SpeechBrain inference wrapper freezes parameters (requires_grad=False),
-    so grad is re-enabled here. Returns (encoder, masknet, decoder) in train()
-    mode. Imported inside the function so that --help stays fast.
+    so grad is re-enabled here. If the pretrained head count differs from
+    num_speakers (for example warm-starting 4- or 5-speaker models from the
+    3-head libri3mix), the masknet is expanded first. Returns (encoder,
+    masknet, decoder) in train() mode. Imported inside the function so that
+    --help stays fast.
     """
     from speechbrain.inference.separation import SepformerSeparation
     from speechbrain.utils.fetching import LocalStrategy
@@ -57,6 +96,7 @@ def load_warm_start(init_model: str, num_speakers: int, device: str):
     encoder = sep.mods.encoder
     masknet = sep.mods.masknet
     decoder = sep.mods.decoder
+    expand_masknet_heads(masknet, num_speakers)
     for module in (encoder, masknet, decoder):
         module.train()
         for param in module.parameters():
@@ -165,6 +205,14 @@ def main() -> int:
                         help="Random seed for the dataset and torch.")
     parser.add_argument("--num-workers", type=int, default=0,
                         help="DataLoader worker processes.")
+    parser.add_argument("--wandb", action="store_true",
+                        help="Also log to Weights & Biases (off by default; "
+                             "CSV stays the source of truth).")
+    parser.add_argument("--wandb-project", default="voxsplit",
+                        help="W&B project name when --wandb is set.")
+    parser.add_argument("--wandb-mode", default="offline",
+                        choices=["offline", "online", "disabled"],
+                        help="W&B mode; offline needs no account.")
     args = parser.parse_args()
 
     if not args.source_dir.is_dir():
@@ -223,6 +271,10 @@ def main() -> int:
             ["step", "loss", "running_loss", "running_si_snri"])
         csv_fh.flush()
 
+    wandb_log = WandbLogger(
+        enabled=args.wandb, project=args.wandb_project, mode=args.wandb_mode,
+        config=vars(args), name=f"pit{num_speakers}spk_to{total_steps}")
+
     running_loss = 0.0
     running_si_snri = 0.0
     running_count = 0
@@ -278,6 +330,9 @@ def main() -> int:
                                      f"{mean_loss:.6f}",
                                      f"{mean_si_snri:.6f}"])
                 csv_fh.flush()
+                wandb_log.log({"loss": float(loss),
+                               "running_loss": mean_loss,
+                               "running_si_snri": mean_si_snri}, step=step)
                 running_loss = 0.0
                 running_si_snri = 0.0
                 running_count = 0
@@ -296,6 +351,7 @@ def main() -> int:
                            optimizer)
     print(f"Saved final checkpoint: {path}")
     csv_fh.close()
+    wandb_log.finish()
     print(f"Training complete. Log at {csv_path}")
     return 0
 

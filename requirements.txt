@@ -30,3 +30,7 @@ matplotlib==3.10.9
 tqdm==4.68.3
 huggingface_hub==1.22.0
 scikit-learn==1.7.2
+
+# optional: Weights & Biases run tracking (trainers take --wandb; off by
+# default, CSV logs stay the source of truth). Not required to train.
+wandb==0.28.0
