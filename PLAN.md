@@ -190,14 +190,26 @@ Reading: dedicated fixed-N heads clearly win on raw quality (no recursion error 
 
 ## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
 Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost. Both the external review and the team's own paper survey converge on recursive separation as the primary route, so that is what we build.
-- [ ] PRIMARY, recursive OR-PIT separation using the Phase 3 model: extract the most dominant speaker, feed the residual back into the same network, repeat. Recursion depth adapts to the unknown speaker count, so one model covers every level
-- [ ] Stopping criterion: a binary classifier on the residual deciding "speech remains" versus "noise only". This is the single highest-risk component. A false positive keeps recursing and injects noise; a false negative silently drops a real speaker. Budget real time for it
-- [ ] Speaker count then comes for free from the recursion depth. Takahashi et al. report this is MORE accurate than estimating the count in advance with a separate classifier (arXiv:1904.03065)
-- [ ] Secondary, speaker-count classifier: small CNN/CRNN on log-mel predicting K in {1..5}, routing to a fixed-N model. Build it as a cross-check and an ablation for the report, not as the main path
-- [ ] Secondary, max-N plus silence detection: run the 5-spk model and drop low-energy or no-speech channels
-- [ ] Known OR-PIT weaknesses we must measure and report honestly: error propagation (a bad early pass contaminates every later pass), no parallelism (passes are sequential, so inference is slow), and sensitivity to the stop classifier. Takahashi notes fine-tuning the recursion helps
-- [ ] Compare all three on the frozen sets (count accuracy and separation quality), then pick or ensemble. Cross-check counts and reconcile disagreements
-- [ ] Deliverable: single entry point `separate.py input.wav` working with no prior knowledge of speaker count
+- [x] PRIMARY, blind recursive OR-PIT separation using the Phase 3 model: `src/inference/separate_recursive_blind.py`. Extract one speaker, feed the residual "rest" head back into the same network, repeat. Head selection and stopping are decided by the count/stop classifier below (no references), so recursion depth adapts to the unknown count and one model covers every level. Self-test recovers 1..5 speakers with an ideal model+classifier
+- [x] Stopping criterion (the single highest-risk component, as predicted): a classifier on the residual deciding whether >=2 speakers remain. `src/models/count_classifier.py`, a log-mel CNN emitting K in {1..5} with `prob_multi()` = P(>=2). FIRST attempt trained on clean mixtures FAILED exactly as feared: OR-PIT separation artifacts make a separated single speaker read as multi (P(>=2)=0.96 vs 0.07 for clean single), so recursion never stopped and every mixture was called 5 speakers (count accuracy 0.25). FIX: train the classifier on the OR-PIT model's OWN outputs (residual domain) via `train_count_classifier.py --orpit-ckpt`, sampling raw mixtures, extracted single heads, and residual "rest" heads at a random recursion DEPTH (multi-level), oracle-labelled. This raised blind count accuracy from 0.25 to 0.49 (single-pass residuals) to 0.71 (multi-level residuals)
+- [x] Speaker count comes for free from the recursion depth: the number of emitted estimates IS the predicted count. Blind count accuracy 0.71 on the frozen 2-5 set (per level: 2 spk 1.00, 3 spk 0.70, 4 spk 0.40, 5 spk 0.75); 4 speakers is the weak point where error propagation through three passes dominates. Predictions logged in `experiments/phase4_count_predictions.csv`
+- [x] Secondary, speaker-count classifier: the SAME log-mel CNN doubles as the standalone K-in-{1..5} cross-check (its argmax), so no separate model was needed. Recursion-depth counting (0.71) is the primary count; the direct classifier is the ablation
+- [~] Secondary, max-N plus silence detection: NOT built. The blind recursion already covers the unknown-count goal and the fixed-N 4/5 models exist if a max-N variant is wanted; deferred as a lower-value alternative path
+- [x] Known OR-PIT weaknesses measured and reported honestly: error propagation is visible (count accuracy and separation both dip at 4 speakers, deep residuals are the hardest); passes are sequential (no parallelism, slower inference); and the pipeline is sensitive to the stop classifier (the 0.25 -> 0.71 story quantifies exactly that). Fine-tuning the recursion loop is the clear next lever
+- [x] Compare on the frozen sets (count accuracy and separation quality): blind separation quality on correctly-counted mixtures matches the oracle recursion (2/3/4/5 spk = 19.25 / 16.09 / 9.09 / 7.23 dB SI-SDRi vs oracle 19.25 / 15.62 / 8.50 / 5.96), i.e. once the count is right, blind head selection is as good as oracle. The count-error cost is the 23/80 mixtures scored as the wrong K. See the table below
+- [x] Deliverable: single entry point `src/inference/separate_unknown.py input.wav` working with no prior knowledge of speaker count (writes one speaker*.wav per detected speaker). Verified end to end on a 3-speaker mixture (detected 3)
+
+### Blind unknown-count results (frozen eval set, threshold 0.5)
+The count/stop classifier drives blind recursion; nothing tells the model how many speakers there are.
+
+| Level | Blind count accuracy | Blind SI-SDRi (correct-count subset) | Oracle SI-SDRi (known count) |
+|---|---|---|---|
+| 2 spk | 1.00 | 19.25 | 19.25 |
+| 3 spk | 0.70 | 16.09 | 15.62 |
+| 4 spk | 0.40 | 9.09 | 8.50 |
+| 5 spk | 0.75 | 7.23 | 5.96 |
+
+Reading: a SINGLE model now separates a recording with an unknown number of speakers, 0.71 count accuracy overall, and when it gets the count right it separates as well as the oracle-guided recursion. The stop classifier was indeed the make-or-break component: it only worked once trained on the OR-PIT model's own artifact-laden residuals at multiple recursion depths (the naive clean-trained version scored 0.25 and never stopped). Weakest at 4 speakers (0.40), the expected error-propagation regime. Rows: `experiments/eval_set_results.csv` tag `orpit_blind_ml`, counts in `experiments/phase4_count_predictions.csv`.
 
 ## Phase 5, Robustness and real-world inputs, week 6 to 8
 - [ ] Input normalization: resample to model rate, downmix to mono, loudness-normalize
