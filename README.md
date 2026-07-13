@@ -12,7 +12,7 @@ summary and phase-by-phase roadmap.
 - [x] Phase 0, environment and GPU verified
 - [x] Phase 1, pretrained baselines compared. Best 3-spk: SepFormer libri3mix (mean SI-SDRi about 18.6 dB). Best 2-spk: MossFormer2 (about 20.2 dB). See PLAN.md for the table
 - [x] Phase 2, frozen eval set (2 to 5 spk, 80 mixtures) plus WHAM-noise, reverb, and 16 kHz variants, all reproducible from committed manifests
-- [x] Phase 3, OR-PIT fine-tuning: converged 20000-step run. One 2-head model separates 2 to 5 speakers, 2-spk direct at 19.25 dB SI-SDRi (beats the 17.35 dB baseline) and 3/4/5-spk via recursion at 15.62 / 8.50 / 5.96 dB (oracle head selection; blind selection is Phase 4). Optional fixed-4/5 and MossFormer2 tracks deferred by design. See PLAN.md
+- [x] Phase 3, OR-PIT fine-tuning: converged 20000-step run. One 2-head model separates 2 to 5 speakers, 2-spk direct at 19.25 dB SI-SDRi (beats the 17.35 dB baseline) and 3/4/5-spk via recursion at 15.62 / 8.50 / 5.96 dB (oracle head selection; blind selection is Phase 4). Benchmarked against fixed-N uPIT baselines (4-spk 15.16, 5-spk 11.01 dB, both trained via masknet head expansion) and a from-scratch TF-GridNet (3-spk, learning-scale). Optional W&B logging wired in (off by default). See PLAN.md
 - [ ] Phase 4, unknown speaker count
 - [ ] Phase 5, real-world robustness
 - [ ] Phase 6, addons (demo, transcription, audio-visual)

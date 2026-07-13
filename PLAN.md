@@ -144,12 +144,12 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
   - [x] Initial 6000-step fine-tune done. On the frozen 2-speaker level the OR-PIT model scores 18.82 dB SI-SDRi (PESQ 3.51, STOI 0.97), beating its wsj02mix warm-start baseline (17.35 dB) by about 1.5 dB. Batch inference via `src/inference/separate_orpit_set.py` loading the trained checkpoint
   - [x] Longer training toward convergence: `train_orpit.py` gained a `--resume` flag (loads encoder/masknet/decoder + optimizer state, treats the step arg as an absolute target, and offsets the dataset seed by the resume step so continued training sees fresh mixtures). A run continuing from step 6000 to 20000 is what produced the converged checkpoint scored below
   - [x] Recursive separation for 3-or-more speakers built: `src/inference/separate_orpit_recursive_set.py` runs the 2-head OR-PIT model recursively (extract one speaker, feed the "rest" head back, repeat K-1 times for a known count K). Head selection (which head is the extracted speaker vs the residual to recurse on) uses an ORACLE against the references, so these numbers are the separation-quality CEILING of the recursion; the blind stop/selection classifier is the Phase 4 deliverable. Self-test recovers 2..5 synthetic sources with no model. This gives VoxSplit its first 4- and 5-speaker separation numbers (previously n/a)
-- [~] Optional fixed-N comparison models: 4-speaker and 5-speaker uPIT models (fresh output heads, warm-start from the 3-spk checkpoint), purely to benchmark OR-PIT against. DEFERRED by design: these are benchmark-only and compute was reserved for the headline OR-PIT convergence run. The fixed-3 comparison already exists (pretrained libri3mix 19.33 vs uPIT-libri3mix 18.65 vs OR-PIT recursive 15.62). Revisit in Phase 7 if the report needs fixed-4/5 points
-- [~] If compute allows: MossFormer2 or TF-GridNet recipe for the 3-spk level (best quality per parameter as of 2025). DEFERRED: compute prioritized for OR-PIT + recursion, which is the count-agnostic differentiator. MossFormer2_SS_16K already benchmarked as a pretrained 2-spk reference in Phase 1
-- [x] Loss and tracking: SI-SDR / SI-SNR (OR-PIT one-and-rest); SI-SDRi tracked per level on the frozen sets in `experiments/eval_set_results.csv`, and per-step training SI-SNRi in `checkpoints/orpit/train_log.csv`
-- [x] VRAM note honored: trained at 8 kHz, 3 s segments, batch 2. The 20k run fit in the 16 GB RTX 5070 Ti alongside recursion inference; gradient accumulation was not needed at this batch size
-- [~] Optionally add Weights & Biases: SKIPPED. The committed CSV logs are the source of truth and stayed sufficient; no extra dependency added
-- [x] Deliverable: one OR-PIT SepFormer that separates 2 to 5 speakers (2-spk direct at 19.25 dB, 3/4/5-spk via recursion at 15.62 / 8.50 / 5.96 dB SI-SDRi), compared against the fixed-3 libri3mix baselines. Fixed-4/5 baselines deferred as above
+- [x] Optional fixed-N comparison models: 4-speaker and 5-speaker uPIT models built and trained. `train_pit.expand_masknet_heads` reshapes the 3-head libri3mix masknet to N heads, warm-starting the new heads by copying existing ones (cycled) rather than random init, so they converge fast. 8000-step runs: 4-spk uPIT 15.16 dB, 5-spk uPIT 11.01 dB SI-SDRi. These beat OR-PIT recursion at the same levels (8.50 and 5.96 dB), quantifying the price recursion pays for count-agnostic coverage (error propagation across passes). See the comparison table below
+- [x] MossFormer2 or TF-GridNet recipe for the 3-spk level: compact TF-GridNet built (`src/models/tfgridnet.py`) and trained from scratch (`train_tfgridnet.py`). No public 3-speaker TF-GridNet checkpoint exists to warm-start from (published ones are WSJ0-2mix, license-restricted), so this is from-scratch. An 8000-step learning-scale run reaches 3.76 dB SI-SDRi at 3 speakers, well short of the fine-tuned SepFormer baselines (a from-scratch TF-domain model needs far more steps, the full-band self-attention module, and wider dims to approach its ~23 dB potential). Honest learning-scale result, in the same spirit as the Conv-TasNet from-scratch warm-up. MossFormer2 was not used here because ClearerVoice ships only a 2-speaker MossFormer2
+- [x] Loss and tracking: SI-SDR / SI-SNR (OR-PIT one-and-rest); SI-SDRi tracked per level on the frozen sets in `experiments/eval_set_results.csv`, and per-step training SI-SNRi in per-run `train_log.csv` files
+- [x] VRAM note honored: trained at 8 kHz, 3 s segments, batch 1-2. Every run fit in the 16 GB RTX 5070 Ti; gradient accumulation was not needed at these batch sizes
+- [x] Weights & Biases added as OPTIONAL: `src/train/wandb_logger.py` plus a `--wandb` flag on every trainer (offline mode default, no account needed). Off by default; the committed CSV logs remain the source of truth. `wandb` is an optional requirement, not needed to train
+- [x] Deliverable: one OR-PIT SepFormer that separates 2 to 5 speakers (2-spk direct at 19.25 dB, 3/4/5-spk via recursion at 15.62 / 8.50 / 5.96 dB SI-SDRi), benchmarked against fixed-N uPIT baselines at every level and a from-scratch TF-GridNet at 3 speakers (comparison table below)
 
 ### Phase 3 training results so far (frozen eval set, 20 mixtures per level, 8 kHz)
 | Model | Level | SI-SDRi (dB) | PESQ | STOI | vs its baseline |
@@ -160,6 +160,9 @@ The clean-trained SepFormer degrades gracefully under additive noise but collaps
 | sepformer-libri3mix (pretrained) | 3 spk | 19.33 | 3.20 | 0.93 | baseline |
 | uPIT 6k (from libri3mix) | 3 spk | 18.65 | 3.11 | 0.93 | -0.7 dB, no gain |
 | Conv-TasNet 6k (from scratch) | 2 spk | 5.04 | 1.76 | 0.78 | learning demo, unconverged |
+| uPIT-4 8k (from libri3mix, expanded heads) | 4 spk | 15.16 | 2.23 | 0.85 | fixed-4 baseline |
+| uPIT-5 8k (from libri3mix, expanded heads) | 5 spk | 11.01 | 1.74 | 0.72 | fixed-5 baseline |
+| TF-GridNet 8k (from scratch) | 3 spk | 3.76 | 1.52 | 0.65 | learning demo, unconverged |
 
 Reading: fine-tuning helps when the pretrained start is out-of-domain (OR-PIT from WSJ-trained wsj02mix gains on LibriSpeech), but not when it is already in-domain (libri3mix was LibriSpeech-trained). So the OR-PIT model is the one to carry into Phase 4; the pretrained libri3mix stays the fixed-3 reference. All rows logged in `experiments/eval_set_results.csv`.
 
@@ -173,6 +176,17 @@ The single 2-head OR-PIT model, recursed K-1 times, separates every level. Numbe
 | OR-PIT 20k recursive | 5 spk | -0.68 | **5.96** | 1.60 | 0.62 | +0.1 dB |
 
 Reading: one model covers 2 to 5 speakers with the expected graceful degradation (about 10 dB drop from 3 to 5 speakers, in line with the field). Longer training helped most at 2 and 3 speakers (+0.4 and +2.0 dB) and least at 5, where error propagation through four recursion passes dominates. At 3 speakers the recursion (15.62 dB) still trails the dedicated fixed-3 libri3mix head (19.33 dB): recursion trades some quality for count-agnostic coverage. Rows logged in `experiments/eval_set_results.csv` under tags `orpit_20k_2spk` and `orpit_20k_recursive_oracle` (the earlier `*_6k_*` rows are kept for the training-length ablation).
+
+### Fixed-N baselines vs recursive OR-PIT (the benchmark)
+The headline question: does one count-agnostic OR-PIT model give up much against dedicated fixed-N models trained per level? Fixed-N uPIT models (4- and 5-speaker) were warm-started from libri3mix via head expansion and trained 8000 steps; a from-scratch TF-GridNet gives a modern time-frequency point at 3 speakers.
+
+| Level | Best fixed-N model (SI-SDRi) | OR-PIT recursive (SI-SDRi) | Gap |
+|---|---|---|---|
+| 3 spk | 19.33 (pretrained libri3mix); 18.65 uPIT-ft; 3.76 TF-GridNet from scratch | 15.62 | -3.7 dB vs best |
+| 4 spk | 15.16 (uPIT-4, this work) | 8.50 | -6.7 dB |
+| 5 spk | 11.01 (uPIT-5, this work) | 5.96 | -5.1 dB |
+
+Reading: dedicated fixed-N heads clearly win on raw quality (no recursion error propagation, one-shot assignment), so if the speaker count is known and fixed, a per-N model is better. The OR-PIT recursion's value is different: a SINGLE model handles every count and, with the Phase 4 stop classifier, an UNKNOWN count, which is the actual evaluation setting. The gap grows with K (recursion compounds errors over more passes), so improving recursion at high K (fine-tuning the recursive loop, a better stop/selection rule) is the clear Phase 4 target. The from-scratch TF-GridNet (3.76 dB) confirms that TF-domain SOTA is not reachable at learning-scale step counts; it stays a learning baseline like Conv-TasNet, not a contender. All rows logged in `experiments/eval_set_results.csv` (tags `pit4_8k`, `pit5_8k`, `tfgridnet_8k`).
 
 ## Phase 4, Unknown speaker count, week 5 to 7 (the likely scoring edge, treat as a first-class goal)
 Test inputs will not announce how many speakers there are. This is probably where the evaluation is won or lost. Both the external review and the team's own paper survey converge on recursive separation as the primary route, so that is what we build.
