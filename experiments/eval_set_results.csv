@@ -7,3 +7,7 @@ timestamp,tag,num_speakers,num_mixtures,mean_si_sdr,mean_si_sdri,mean_pesq,mean_
 2026-07-13T20:47:22,orpit_6k_recursive_oracle,3,20,10.3774,13.6322,2.5616,0.8748
 2026-07-13T20:47:22,orpit_6k_recursive_oracle,4,20,2.5241,7.7787,1.8021,0.7041
 2026-07-13T20:47:22,orpit_6k_recursive_oracle,5,20,-0.7950,5.8477,1.5991,0.6181
+2026-07-13T21:32:26,orpit_20k_2spk,2,20,19.2609,19.2547,3.5338,0.9685
+2026-07-13T21:32:45,orpit_20k_recursive_oracle,3,20,12.3631,15.6179,2.7497,0.9022
+2026-07-13T21:32:45,orpit_20k_recursive_oracle,4,20,3.2457,8.5003,1.8611,0.7297
+2026-07-13T21:32:45,orpit_20k_recursive_oracle,5,20,-0.6836,5.9591,1.6029,0.6201
