@@ -180,6 +180,67 @@ def separate_longform(
     return tracks
 
 
+def load_longform_models(orpit_ckpt: Path, clf_ckpt: Path, ecapa_dir: Path,
+                         init_model: str, device: str):
+    """Load OR-PIT + count classifier + ECAPA and return the three closures
+    (forward_fn, prob_multi_fn, embed_fn) that separate_longform needs.
+
+    Shared by the CLI and the Phase 6 demo pipeline so model wiring lives once.
+    """
+    from separate_recursive_blind import resolve_device
+    from train_orpit import separate_forward, neutralize_lazy_modules
+    from count_classifier import SpeakerCountCNN, MAX_SPEAKERS
+    from speechbrain.inference.separation import SepformerSeparation
+    from speechbrain.inference.speaker import EncoderClassifier
+    from speechbrain.utils.fetching import LocalStrategy
+
+    device = resolve_device(device)
+    savedir = Path("pretrained_models") / init_model.split("/")[-1]
+    sep = SepformerSeparation.from_hparams(
+        source=init_model, savedir=str(savedir),
+        run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
+    neutralize_lazy_modules()
+    oc = torch.load(str(orpit_ckpt), map_location=device)
+    enc, mn, dec = sep.mods.encoder, sep.mods.masknet, sep.mods.decoder
+    enc.load_state_dict(oc["encoder"])
+    mn.load_state_dict(oc["masknet"])
+    dec.load_state_dict(oc["decoder"])
+    for m in (enc, mn, dec):
+        m.eval()
+
+    cc = torch.load(str(clf_ckpt), map_location=device)
+    clf = SpeakerCountCNN(num_classes=cc.get("num_classes", MAX_SPEAKERS))
+    clf.load_state_dict(cc["model"])
+    clf.to(device).eval()
+
+    if not (ecapa_dir / "embedding_model.ckpt").is_file():
+        raise FileNotFoundError(
+            f"ECAPA weights not found in {ecapa_dir}. Pre-fetch once with "
+            f"huggingface_hub.snapshot_download('speechbrain/"
+            f"spkrec-ecapa-voxceleb', local_dir='{ecapa_dir}').")
+    ecapa = EncoderClassifier.from_hparams(
+        source=str(ecapa_dir), savedir=str(ecapa_dir),
+        run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
+
+    def forward_fn(sig: np.ndarray) -> np.ndarray:
+        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
+        with torch.no_grad():
+            est = separate_forward(enc, mn, dec, x)
+        return est.cpu().numpy()[0].T
+
+    def prob_multi_fn(sig: np.ndarray) -> float:
+        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
+        return float(clf.prob_multi(x)[0])
+
+    def embed_fn(sig: np.ndarray) -> np.ndarray:
+        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
+        with torch.no_grad():
+            emb = ecapa.encode_batch(x)
+        return emb.squeeze().cpu().numpy()
+
+    return forward_fn, prob_multi_fn, embed_fn
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Long-audio separation with ECAPA identity stitching.")
@@ -219,64 +280,16 @@ def main() -> int:
         return 1
 
     from separate_recursive_blind import resolve_device
-    from train_orpit import separate_forward, neutralize_lazy_modules
-    from count_classifier import SpeakerCountCNN, MAX_SPEAKERS
-
     device = resolve_device(args.device)
     print(f"Using device: {device}")
 
-    from speechbrain.inference.separation import SepformerSeparation
-    from speechbrain.inference.speaker import EncoderClassifier
-    from speechbrain.utils.fetching import LocalStrategy
-
-    savedir = Path("pretrained_models") / args.init_model.split("/")[-1]
-    sep = SepformerSeparation.from_hparams(
-        source=args.init_model, savedir=str(savedir),
-        run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
-    neutralize_lazy_modules()
-    oc = torch.load(str(args.orpit_ckpt), map_location=device)
-    enc, mn, dec = sep.mods.encoder, sep.mods.masknet, sep.mods.decoder
-    enc.load_state_dict(oc["encoder"])
-    mn.load_state_dict(oc["masknet"])
-    dec.load_state_dict(oc["decoder"])
-    for m in (enc, mn, dec):
-        m.eval()
-
-    cc = torch.load(str(args.clf_ckpt), map_location=device)
-    clf = SpeakerCountCNN(num_classes=cc.get("num_classes", MAX_SPEAKERS))
-    clf.load_state_dict(cc["model"])
-    clf.to(device).eval()
-
-    # SpeechBrain's HF fetch of the ECAPA weights can hang on Windows. Load
-    # from a local directory that already holds the ckpts + hyperparams.yaml
-    # (pre-fetch ONCE with the snapshot_download command in the module
-    # docstring); with the files present, from_hparams resolves locally.
-    ecapa_dir = args.ecapa_dir
-    if not (ecapa_dir / "embedding_model.ckpt").is_file():
-        print(f"ECAPA weights not found in {ecapa_dir}. Pre-fetch once:\n"
-              f"  python -c \"from huggingface_hub import snapshot_download; "
-              f"snapshot_download('speechbrain/spkrec-ecapa-voxceleb', "
-              f"local_dir='{ecapa_dir}')\"")
+    try:
+        forward_fn, prob_multi_fn, embed_fn = load_longform_models(
+            args.orpit_ckpt, args.clf_ckpt, args.ecapa_dir, args.init_model,
+            device)
+    except FileNotFoundError as exc:
+        print(exc)
         return 1
-    ecapa = EncoderClassifier.from_hparams(
-        source=str(ecapa_dir), savedir=str(ecapa_dir),
-        run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
-
-    def forward_fn(sig: np.ndarray) -> np.ndarray:
-        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
-        with torch.no_grad():
-            est = separate_forward(enc, mn, dec, x)
-        return est.cpu().numpy()[0].T
-
-    def prob_multi_fn(sig: np.ndarray) -> float:
-        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
-        return float(clf.prob_multi(x)[0])
-
-    def embed_fn(sig: np.ndarray) -> np.ndarray:
-        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
-        with torch.no_grad():
-            emb = ecapa.encode_batch(x)
-        return emb.squeeze().cpu().numpy()
 
     signal, orig_sr = load_normalized(args.input, MODEL_SR)
     chunk_len = int(round(args.chunk_seconds * MODEL_SR))

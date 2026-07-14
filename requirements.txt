@@ -34,3 +34,9 @@ scikit-learn==1.7.2
 # optional: Weights & Biases run tracking (trainers take --wandb; off by
 # default, CSV logs stay the source of truth). Not required to train.
 wandb==0.28.0
+
+# Phase 6 demo/addons: Gradio web app and per-speaker transcription.
+# faster-whisper (CTranslate2) is used instead of openai-whisper because the
+# latter needs numba/llvmlite, which is blocked here by a Windows policy.
+gradio==6.20.0
+faster-whisper==1.2.1
