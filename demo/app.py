@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 import gradio as gr
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pipeline import Pipeline, DEFAULT_ORPIT, DEFAULT_CLF  # noqa: E402
@@ -32,11 +33,18 @@ def get_pipeline() -> Pipeline:
     return _PIPELINE["obj"]
 
 
-def separate(audio_path):
-    """Run the pipeline and fan the results out into the fixed UI slots."""
+def separate(audio_path, sensitivity):
+    """Run the pipeline and fan the results out into the fixed UI slots.
+
+    `sensitivity` is 1 - recursion_threshold, so a higher slider value splits
+    more aggressively (finds more speakers). Use it if the detected count looks
+    too low (voices merged) or too high (a speaker split in two).
+    """
     if not audio_path:
         raise gr.Error("Please upload an audio file first.")
-    out = get_pipeline().process(audio_path)
+    recursion_threshold = float(np.clip(1.0 - sensitivity, 0.2, 0.7))
+    out = get_pipeline().process(audio_path,
+                                 recursion_threshold=recursion_threshold)
     sr = out["sr"]
     n = out["num_speakers"]
 
@@ -70,6 +78,11 @@ def build_ui() -> gr.Blocks:
             inp = gr.Audio(type="filepath", label="Input recording")
             with gr.Column():
                 status = gr.Markdown()
+                sensitivity = gr.Slider(
+                    0.3, 0.8, value=0.5, step=0.05,
+                    label="Split sensitivity",
+                    info="Raise if voices are merged into one track; lower if "
+                         "one speaker is split into two.")
                 btn = gr.Button("Separate", variant="primary")
         with gr.Row():
             input_spec = gr.Plot(label="Input spectrogram")
@@ -91,7 +104,7 @@ def build_ui() -> gr.Blocks:
         outputs = [status, input_spec, timeline]
         for r, a, s, t in zip(rows, audios, specs, texts):
             outputs += [r, a, s, t]
-        btn.click(separate, inputs=inp, outputs=outputs)
+        btn.click(separate, inputs=[inp, sensitivity], outputs=outputs)
     return demo
 
 

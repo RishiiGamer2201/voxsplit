@@ -23,7 +23,11 @@ from separate_longform import separate_longform, load_longform_models  # noqa: E
 from timeline import speaking_segments, plot_timeline  # noqa: E402
 import transcribe  # noqa: E402
 
-DEFAULT_ORPIT = "checkpoints/orpit_robust/ckpt_step26000.pt"
+# Default to the clean 20k OR-PIT: the count/stop classifier was trained on
+# THIS model's residuals, so counts are most accurate here. The robust
+# (noise/reverb) checkpoint separates degraded audio better but slightly
+# mis-counts clean input; pass it explicitly for noisy recordings.
+DEFAULT_ORPIT = "checkpoints/orpit/ckpt_step20000.pt"
 DEFAULT_CLF = "checkpoints/count_clf_res/ckpt_step8000.pt"
 DEFAULT_ECAPA = "pretrained_models/ecapa-dl"
 
@@ -58,13 +62,17 @@ class Pipeline:
 
     def process(self, audio_path: str, chunk_seconds: float = 4.0,
                 overlap_seconds: float = 1.0,
+                recursion_threshold: float = 0.5,
+                cluster_threshold: float = 0.55,
                 transcribe_tracks: bool = True) -> Dict:
         signal, orig_sr = load_normalized(Path(audio_path), MODEL_SR)
         chunk_len = int(round(chunk_seconds * MODEL_SR))
         hop_len = max(int(round((chunk_seconds - overlap_seconds) * MODEL_SR)),
                       1)
         tracks = separate_longform(signal, self.fwd, self.pm, self.emb,
-                                   chunk_len, hop_len)
+                                   chunk_len, hop_len,
+                                   cluster_threshold=cluster_threshold,
+                                   recursion_threshold=recursion_threshold)
 
         transcripts: List[str] = []
         segments: List[list] = []
