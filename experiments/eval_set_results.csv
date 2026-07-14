@@ -27,3 +27,5 @@ timestamp,tag,num_speakers,num_mixtures,mean_si_sdr,mean_si_sdri,mean_pesq,mean_
 2026-07-14T12:52:07,orpit_robust_clean,2,20,19.0283,19.0220,3.5011,0.9665
 2026-07-14T12:52:16,orpit_robust_noise,2,20,9.0488,11.4401,2.1705,0.8484
 2026-07-14T12:52:26,orpit_robust_reverb,2,20,7.1219,7.0595,2.3152,0.7952
+2026-07-14T13:48:25,orpit20k_enhanced,2,20,-0.4868,-0.4931,3.1067,0.8809
+2026-07-14T13:48:34,robust_noise_enhanced,2,20,-4.1045,-1.7132,2.3385,0.7315
