@@ -120,6 +120,7 @@ def separate_longform(
         hop_len: int,
         cluster_threshold: float = 0.55,
         recursion_threshold: float = 0.5,
+        force_count: "int | None" = None,
         ramp: int = 400) -> List[np.ndarray]:
     """Separate a long signal into whole-file per-speaker tracks.
 
@@ -138,7 +139,8 @@ def separate_longform(
     per_chunk = []          # list of (start, [wav...], [emb...])
     for start, chunk in windows:
         ests = blind_recursive_separate(chunk, forward_fn, prob_multi_fn,
-                                        threshold=recursion_threshold)
+                                        threshold=recursion_threshold,
+                                        force_count=force_count)
         embs = [_unit(np.asarray(embed_fn(w), dtype=np.float64).flatten())
                 for w in ests]
         per_chunk.append((start,

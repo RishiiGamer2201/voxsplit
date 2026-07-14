@@ -46,6 +46,13 @@ from count_classifier import SpeakerCountCNN, MAX_SPEAKERS  # noqa: E402
 
 MODEL_SR = 8000
 
+# Maximum recursion depth for BLIND separation. Decoupled from the classifier's
+# class count (MAX_SPEAKERS, baked into the trained 5-way checkpoint): stopping
+# uses prob_multi = P(>=2), which is well defined for any count, so the loop can
+# emit more than 5 tracks. Beyond ~5 is out of the trained range (poor count and
+# separation), but the cap allows experimentation.
+MAX_RECURSION_DEPTH = 8
+
 
 def resolve_device(device: str) -> str:
     if device == "auto":
@@ -68,20 +75,41 @@ def blind_recursive_separate(
         forward_fn: Callable[[np.ndarray], np.ndarray],
         prob_multi_fn: Callable[[np.ndarray], float],
         threshold: float = 0.5,
-        max_speakers: int = MAX_SPEAKERS) -> List[np.ndarray]:
+        max_speakers: int = MAX_RECURSION_DEPTH,
+        force_count: "int | None" = None) -> List[np.ndarray]:
     """Recurse with a classifier deciding head selection and stopping.
 
     forward_fn: [T] -> [2, T2] the two OR-PIT heads.
     prob_multi_fn: [T] -> P(>=2 speakers) for a waveform.
-    Returns a list of 1..max_speakers estimate arrays; its length is the
-    predicted speaker count.
+    force_count: if given, extract EXACTLY this many speakers (force_count-1
+    passes), ignoring the stop classifier. Head selection still uses P(>=2) to
+    decide which head is the single speaker vs the residual. Use it when the
+    count is known and the blind count is unreliable (e.g. 4 speakers).
+    Returns a list of estimate arrays; its length is the speaker count.
     """
     mixture = np.asarray(mixture, dtype=np.float32)
+
+    if force_count is not None:
+        if force_count <= 1:
+            return [mixture]
+        residual = mixture
+        estimates: List[np.ndarray] = []
+        for _ in range(force_count - 1):
+            heads = forward_fn(residual)
+            p0 = prob_multi_fn(heads[0])
+            p1 = prob_multi_fn(heads[1])
+            keep, rest = ((heads[0], heads[1]) if p0 <= p1
+                          else (heads[1], heads[0]))
+            estimates.append(np.asarray(keep, dtype=np.float32))
+            residual = np.asarray(rest, dtype=np.float32)
+        estimates.append(residual)
+        return estimates
+
     if prob_multi_fn(mixture) < threshold:
         return [mixture]
 
     residual = mixture
-    estimates: List[np.ndarray] = []
+    estimates = []
     for _ in range(max_speakers - 1):
         heads = forward_fn(residual)                 # [2, T2]
         p0 = prob_multi_fn(heads[0])

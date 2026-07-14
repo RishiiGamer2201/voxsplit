@@ -64,6 +64,7 @@ class Pipeline:
                 overlap_seconds: float = 1.0,
                 recursion_threshold: float = 0.5,
                 cluster_threshold: float = 0.55,
+                force_count: "int | None" = None,
                 transcribe_tracks: bool = True) -> Dict:
         signal, orig_sr = load_normalized(Path(audio_path), MODEL_SR)
         chunk_len = int(round(chunk_seconds * MODEL_SR))
@@ -72,7 +73,8 @@ class Pipeline:
         tracks = separate_longform(signal, self.fwd, self.pm, self.emb,
                                    chunk_len, hop_len,
                                    cluster_threshold=cluster_threshold,
-                                   recursion_threshold=recursion_threshold)
+                                   recursion_threshold=recursion_threshold,
+                                   force_count=force_count)
 
         transcripts: List[str] = []
         segments: List[list] = []

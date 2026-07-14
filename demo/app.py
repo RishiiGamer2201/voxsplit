@@ -21,7 +21,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pipeline import Pipeline, DEFAULT_ORPIT, DEFAULT_CLF  # noqa: E402
 
-MAX_SPK = 5  # UI rows; the model can detect up to this many speakers.
+MAX_SPK = 8  # UI rows and the recursion cap; >5 is out of the trained range.
 
 _PIPELINE = {"obj": None, "kwargs": {}}
 
@@ -33,18 +33,22 @@ def get_pipeline() -> Pipeline:
     return _PIPELINE["obj"]
 
 
-def separate(audio_path, sensitivity):
+def separate(audio_path, sensitivity, count_choice):
     """Run the pipeline and fan the results out into the fixed UI slots.
 
     `sensitivity` is 1 - recursion_threshold, so a higher slider value splits
-    more aggressively (finds more speakers). Use it if the detected count looks
-    too low (voices merged) or too high (a speaker split in two).
+    more aggressively (finds more speakers). Use it if the auto-detected count
+    looks too low (voices merged) or too high (a speaker split in two).
+    `count_choice` "Auto" uses the classifier; a number forces exactly that many
+    speakers (skips the shaky count classifier), best for short clips.
     """
     if not audio_path:
         raise gr.Error("Please upload an audio file first.")
     recursion_threshold = float(np.clip(1.0 - sensitivity, 0.2, 0.7))
+    force_count = None if count_choice == "Auto" else int(count_choice)
     out = get_pipeline().process(audio_path,
-                                 recursion_threshold=recursion_threshold)
+                                 recursion_threshold=recursion_threshold,
+                                 force_count=force_count)
     sr = out["sr"]
     n = out["num_speakers"]
 
@@ -78,9 +82,14 @@ def build_ui() -> gr.Blocks:
             inp = gr.Audio(type="filepath", label="Input recording")
             with gr.Column():
                 status = gr.Markdown()
+                count_choice = gr.Dropdown(
+                    choices=["Auto"] + [str(i) for i in range(1, MAX_SPK + 1)],
+                    value="Auto", label="Speaker count",
+                    info="Auto detects the count; pick a number to force it "
+                         "(best for short clips, useful when Auto miscounts).")
                 sensitivity = gr.Slider(
                     0.3, 0.8, value=0.5, step=0.05,
-                    label="Split sensitivity",
+                    label="Split sensitivity (Auto mode only)",
                     info="Raise if voices are merged into one track; lower if "
                          "one speaker is split into two.")
                 btn = gr.Button("Separate", variant="primary")
@@ -104,7 +113,8 @@ def build_ui() -> gr.Blocks:
         outputs = [status, input_spec, timeline]
         for r, a, s, t in zip(rows, audios, specs, texts):
             outputs += [r, a, s, t]
-        btn.click(separate, inputs=[inp, sensitivity], outputs=outputs)
+        btn.click(separate, inputs=[inp, sensitivity, count_choice],
+                  outputs=outputs)
     return demo
 
 
