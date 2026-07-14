@@ -19,6 +19,12 @@ Pipeline:
 The clustering IS the cross-chunk permutation alignment and count
 reconciliation. Head selection/stopping inside a chunk stay the Phase 4 job.
 
+ECAPA weights are loaded from a local directory (--ecapa-dir). Pre-fetch once
+(the SpeechBrain HF fetch can hang on Windows):
+  python -c "from huggingface_hub import snapshot_download; \
+    snapshot_download('speechbrain/spkrec-ecapa-voxceleb', \
+    local_dir='pretrained_models/ecapa-dl')"
+
 Run this file directly for a self-test that needs no real data or model:
   python src/inference/separate_longform.py --self-test
 
@@ -71,20 +77,38 @@ def _taper_window(length: int, ramp: int) -> np.ndarray:
     return w
 
 
-def cluster_embeddings(embeddings: np.ndarray, threshold: float) -> np.ndarray:
-    """Agglomerative clustering on cosine distance; labels for each embedding.
+def _unit(v: np.ndarray) -> np.ndarray:
+    """L2-normalize a vector (so a dot product is a cosine similarity)."""
+    return v / (np.linalg.norm(v) + 1e-9)
 
-    The cluster count is chosen automatically by the distance threshold, so it
-    reflects the union of speakers seen across chunks. One embedding -> one
-    cluster.
+
+def _assign_chunk(embs, centroids, counts, threshold: float):
+    """One-to-one match a chunk's embeddings to global speakers; grow as needed.
+
+    Hungarian assignment minimizes total cosine distance between this chunk's
+    estimates and existing global centroids. A match is accepted only if its
+    cosine distance is below `threshold`; unmatched estimates start new global
+    speakers. Matched centroids are updated with a running mean. Mutates
+    `centroids`/`counts` and returns the global id per input embedding.
     """
-    if len(embeddings) == 1:
-        return np.zeros(1, dtype=int)
-    from sklearn.cluster import AgglomerativeClustering
-    model = AgglomerativeClustering(
-        n_clusters=None, metric="cosine", linkage="average",
-        distance_threshold=threshold)
-    return model.fit_predict(embeddings)
+    from scipy.optimize import linear_sum_assignment
+
+    ids = [None] * len(embs)
+    if centroids:
+        cost = np.stack([[1.0 - float(np.dot(e, c)) for c in centroids]
+                         for e in embs])
+        rows, cols = linear_sum_assignment(cost)
+        for r, c in zip(rows, cols):
+            if cost[r, c] < threshold:
+                ids[r] = c
+                centroids[c] = _unit(centroids[c] * counts[c] + embs[r])
+                counts[c] += 1
+    for r in range(len(embs)):
+        if ids[r] is None:
+            ids[r] = len(centroids)
+            centroids.append(embs[r].copy())
+            counts.append(1)
+    return ids
 
 
 def separate_longform(
@@ -94,34 +118,54 @@ def separate_longform(
         embed_fn: Callable[[np.ndarray], np.ndarray],
         chunk_len: int,
         hop_len: int,
-        cluster_threshold: float = 0.6,
+        cluster_threshold: float = 0.55,
+        recursion_threshold: float = 0.5,
         ramp: int = 400) -> List[np.ndarray]:
     """Separate a long signal into whole-file per-speaker tracks.
 
     Returns a list of G full-length tracks, one per clustered global speaker.
+    recursion_threshold leans the per-chunk stop decision (a lower value
+    over-extracts, which is safer than dropping a speaker in a chunk since the
+    clustering merges duplicates anyway). cluster_threshold is a cosine distance
+    on ECAPA embeddings of SEPARATED audio, whose speaker distances are
+    compressed by residual bleed, so it is smaller than a clean-speech default.
     """
     n = len(signal)
     windows = chunk_signal(signal, chunk_len, hop_len)
 
-    # Separate every chunk and embed every chunk-speaker.
-    items = []              # (start, wav, embedding)
+    # Separate every chunk and embed every chunk-speaker, keeping the per-chunk
+    # grouping (each chunk's estimates are distinct speakers).
+    per_chunk = []          # list of (start, [wav...], [emb...])
     for start, chunk in windows:
-        ests = blind_recursive_separate(chunk, forward_fn, prob_multi_fn)
-        for wav in ests:
-            emb = np.asarray(embed_fn(wav), dtype=np.float64).flatten()
-            items.append((start, np.asarray(wav, dtype=np.float32), emb))
+        ests = blind_recursive_separate(chunk, forward_fn, prob_multi_fn,
+                                        threshold=recursion_threshold)
+        embs = [_unit(np.asarray(embed_fn(w), dtype=np.float64).flatten())
+                for w in ests]
+        per_chunk.append((start,
+                          [np.asarray(w, dtype=np.float32) for w in ests],
+                          embs))
 
-    if not items:
+    if not any(wavs for _, wavs, _ in per_chunk):
         return [np.zeros(n, dtype=np.float32)]
 
-    labels = cluster_embeddings(np.stack([e for _, _, e in items]),
-                                cluster_threshold)
-    num_speakers = int(labels.max()) + 1
+    # Sequential one-to-one identity stitching. Global speakers are seeded from
+    # the first non-empty chunk; each later chunk Hungarian-matches its
+    # estimates to existing global centroids (one-to-one, so two estimates from
+    # the SAME chunk can never collapse into one speaker), and any estimate too
+    # far from every centroid starts a new speaker (count reconciliation).
+    items = []              # (start, wav, global_id)
+    centroids: List[np.ndarray] = []
+    counts: List[int] = []
+    for start, wavs, embs in per_chunk:
+        ids = _assign_chunk(embs, centroids, counts, cluster_threshold)
+        for wav, g in zip(wavs, ids):
+            items.append((start, wav, g))
+    num_speakers = len(centroids)
 
-    # Overlap-add each chunk-speaker into its cluster track, weight-normalized.
+    # Overlap-add each chunk-speaker into its global track, weight-normalized.
     outputs = [np.zeros(n, dtype=np.float64) for _ in range(num_speakers)]
     weights = [np.zeros(n, dtype=np.float64) for _ in range(num_speakers)]
-    for (start, wav, _), g in zip(items, labels):
+    for start, wav, g in items:
         length = min(len(wav), n - start)
         if length <= 0:
             continue
@@ -146,10 +190,20 @@ def main() -> int:
     parser.add_argument("--init-model",
                         default="speechbrain/sepformer-wsj02mix")
     parser.add_argument("--out-dir", type=Path)
-    parser.add_argument("--chunk-seconds", type=float, default=10.0)
-    parser.add_argument("--overlap-seconds", type=float, default=2.0)
-    parser.add_argument("--cluster-threshold", type=float, default=0.6,
-                        help="Cosine-distance threshold for ECAPA clustering.")
+    parser.add_argument("--chunk-seconds", type=float, default=4.0,
+                        help="Chunk length; kept near the 3 s training segment "
+                             "so the separator and count classifier stay in "
+                             "domain.")
+    parser.add_argument("--overlap-seconds", type=float, default=1.0)
+    parser.add_argument("--cluster-threshold", type=float, default=0.55,
+                        help="Cosine-distance threshold to match a chunk "
+                             "estimate to an existing global speaker.")
+    parser.add_argument("--recursion-threshold", type=float, default=0.5,
+                        help="Per-chunk stop threshold for blind recursion.")
+    parser.add_argument("--ecapa-dir", type=Path,
+                        default=Path("pretrained_models/ecapa-dl"),
+                        help="Local ECAPA directory with hyperparams.yaml and "
+                             "*.ckpt (pre-fetch via huggingface_hub).")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
@@ -193,9 +247,19 @@ def main() -> int:
     clf.load_state_dict(cc["model"])
     clf.to(device).eval()
 
+    # SpeechBrain's HF fetch of the ECAPA weights can hang on Windows. Load
+    # from a local directory that already holds the ckpts + hyperparams.yaml
+    # (pre-fetch ONCE with the snapshot_download command in the module
+    # docstring); with the files present, from_hparams resolves locally.
+    ecapa_dir = args.ecapa_dir
+    if not (ecapa_dir / "embedding_model.ckpt").is_file():
+        print(f"ECAPA weights not found in {ecapa_dir}. Pre-fetch once:\n"
+              f"  python -c \"from huggingface_hub import snapshot_download; "
+              f"snapshot_download('speechbrain/spkrec-ecapa-voxceleb', "
+              f"local_dir='{ecapa_dir}')\"")
+        return 1
     ecapa = EncoderClassifier.from_hparams(
-        source="speechbrain/spkrec-ecapa-voxceleb",
-        savedir="pretrained_models/ecapa-voxceleb",
+        source=str(ecapa_dir), savedir=str(ecapa_dir),
         run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
 
     def forward_fn(sig: np.ndarray) -> np.ndarray:
@@ -224,9 +288,12 @@ def main() -> int:
 
     tracks = separate_longform(
         signal, forward_fn, prob_multi_fn, embed_fn, chunk_len, hop_len,
-        cluster_threshold=args.cluster_threshold)
+        cluster_threshold=args.cluster_threshold,
+        recursion_threshold=args.recursion_threshold)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
+    for old in args.out_dir.glob("speaker*.wav"):
+        old.unlink()  # avoid stale tracks from a previous, larger-count run
     for j, tr in enumerate(tracks, start=1):
         sf.write(str(args.out_dir / f"speaker{j}.wav"),
                  tr.astype(np.float32), MODEL_SR, subtype="FLOAT")
