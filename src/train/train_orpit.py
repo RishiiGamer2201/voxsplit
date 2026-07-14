@@ -196,6 +196,12 @@ def main() -> int:
                              "Loads encoder/masknet/decoder and optimizer "
                              "state and treats --max-steps/--epochs*--steps "
                              "as the ABSOLUTE target step to train up to.")
+    parser.add_argument("--noise-dir", type=Path, default=None,
+                        help="If set, randomly add noise from this dir (e.g. "
+                             "WHAM) to training mixtures for robustness.")
+    parser.add_argument("--reverb", action="store_true",
+                        help="If set, randomly reverberate training mixtures "
+                             "with a pooled RIR bank for robustness.")
     parser.add_argument("--wandb", action="store_true",
                         help="Also log to Weights & Biases (off by default; "
                              "CSV stays the source of truth).")
@@ -256,6 +262,14 @@ def main() -> int:
         length=ds_length,
     )
     print(f"Dataset scanned {len(dataset.speakers)} speakers.")
+
+    if args.noise_dir is not None or args.reverb:
+        from augment import AugMixDataset  # noqa: E402
+        dataset = AugMixDataset(
+            dataset, noise_dir=args.noise_dir, reverb=args.reverb,
+            seed=args.seed + start_step)
+        print(f"Robustness augmentation on (noise_dir={args.noise_dir}, "
+              f"reverb={args.reverb}).")
 
     loader = DataLoader(
         dataset,
