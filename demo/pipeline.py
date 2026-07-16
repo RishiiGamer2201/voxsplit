@@ -8,16 +8,20 @@ timeline. Shared by demo/app.py (Gradio) and usable directly as a library.
 Run this file directly to process one file from the command line:
   python demo/pipeline.py path/to/mix.wav
 """
+import os
 import sys
+import tempfile
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
+import soundfile as sf
 import torch
 import torchaudio.functional as AF
 
 _SRC = Path(__file__).resolve().parent.parent / "src" / "inference"
 sys.path.insert(0, str(_SRC))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "tts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "train"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "models"))
 from audio_io import load_normalized, MODEL_SR  # noqa: E402
@@ -57,10 +61,14 @@ class Pipeline:
                  clf_ckpt: str = DEFAULT_CLF, ecapa_dir: str = DEFAULT_ECAPA,
                  init_model: str = "speechbrain/sepformer-wsj02mix",
                  whisper_size: str = "base.en", device: str = "auto") -> None:
+        self.device = device
         self.fwd, self.pm, self.emb = load_longform_models(
             Path(orpit_ckpt), Path(clf_ckpt), Path(ecapa_dir), init_model,
             device)
         self.whisper = transcribe.load_model(whisper_size, device)
+        # Voice cloning (XTTS v2) is lazy: only loaded on the first request.
+        self._cloner = None
+        self._speaker_wavs: List[str] = []   # temp refs for the cloner
 
     def process(self, audio_path: str, chunk_seconds: float = 4.0,
                 overlap_seconds: float = 1.0,
@@ -82,26 +90,69 @@ class Pipeline:
     def _build_outputs(self, signal, tracks, orig_sr, transcribe_tracks,
                        label="Speaker") -> Dict:
         """Spectrograms, transcripts, and a timeline for a set of tracks."""
+        float_tracks = [np.asarray(t, dtype=np.float32) for t in tracks]
         transcripts: List[str] = []
         segments: List[list] = []
-        for tr in tracks:
+        for tr in float_tracks:
             segments.append(speaking_segments(tr, MODEL_SR))
             transcripts.append(
                 transcribe.transcribe_track(self.whisper, tr, MODEL_SR)
                 if transcribe_tracks else "")
+        # Keep the tracks on disk so voice cloning can use them as references.
+        self._save_speaker_wavs(float_tracks, MODEL_SR)
         duration = len(signal) / MODEL_SR
         return {
             "sr": MODEL_SR,
             "orig_sr": orig_sr,
             "duration": duration,
-            "num_speakers": len(tracks),
-            "tracks": [np.asarray(t, dtype=np.float32) for t in tracks],
+            "num_speakers": len(float_tracks),
+            "tracks": float_tracks,
             "input_fig": spectrogram_fig(signal, MODEL_SR, "Input mixture"),
             "speaker_figs": [spectrogram_fig(t, MODEL_SR, f"{label} {i + 1}")
-                             for i, t in enumerate(tracks)],
+                             for i, t in enumerate(float_tracks)],
             "transcripts": transcripts,
             "timeline_fig": plot_timeline(segments, duration),
         }
+
+    def _save_speaker_wavs(self, tracks: List[np.ndarray], sr: int) -> List[str]:
+        """Write each track to a temp WAV; these are the voice-clone references.
+
+        Temp files from the previous run are removed first.
+        """
+        for p in self._speaker_wavs:
+            try:
+                Path(p).unlink(missing_ok=True)
+            except Exception:
+                pass
+        paths: List[str] = []
+        for i, wav in enumerate(tracks):
+            fd, path = tempfile.mkstemp(suffix=f"_spk{i + 1}.wav",
+                                        prefix="voxsplit_")
+            os.close(fd)
+            sf.write(path, wav, sr)
+            paths.append(path)
+        self._speaker_wavs = paths
+        return paths
+
+    def clone_voice(self, text: str, speaker_idx: int,
+                    language: str = "en") -> Tuple[np.ndarray, int]:
+        """Speak `text` in the voice of a separated speaker (XTTS v2).
+
+        The separated track itself is the voice reference, so no extra
+        recording is needed. Requires process()/process_video() to have run.
+        Returns (wav, sample_rate).
+        """
+        if not self._speaker_wavs:
+            raise RuntimeError("No speaker tracks yet — run a separation first.")
+        if not 0 <= speaker_idx < len(self._speaker_wavs):
+            raise ValueError(
+                f"speaker_idx {speaker_idx} out of range "
+                f"(0-{len(self._speaker_wavs) - 1}).")
+        if self._cloner is None:
+            from voice_clone import VoiceCloner
+            self._cloner = VoiceCloner(device=self.device)
+        return self._cloner.clone(text, self._speaker_wavs[speaker_idx],
+                                  language)
 
     def process_video(self, video_path: str, num_faces: int = 0,
                       transcribe_tracks: bool = True) -> Dict:

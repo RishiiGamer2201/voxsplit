@@ -35,11 +35,21 @@ scikit-learn==1.7.2
 # default, CSV logs stay the source of truth). Not required to train.
 wandb==0.28.0
 
-# Phase 6 demo/addons: Gradio web app and per-speaker transcription.
+# Phase 6 demo/addons: Gradio web app, per-speaker transcription, and
+# zero-shot voice-cloning TTS (XTTS v2 via coqui-tts).
 # faster-whisper (CTranslate2) is used instead of openai-whisper because the
 # latter needs numba/llvmlite, which is blocked here by a Windows policy.
 gradio==6.20.0
 faster-whisper==1.2.1
+
+# OPT-IN: voice-cloning TTS (XTTS v2 via the community Coqui TTS fork).
+# Deliberately NOT installed by default: coqui-tts pins torch/transformers and
+# can DOWNGRADE the cu128 build this project needs, breaking GPU separation.
+# The demo imports it lazily, so everything else works without it. To enable:
+#     pip install coqui-tts        # ideally in a separate env, then verify:
+#     python src/check_env.py      # must still report CUDA avail: True
+# Note: XTTS v2 weights are under the Coqui Public Model License (non-commercial).
+# coqui-tts>=0.27.0
 
 # Audio-visual mode (src/av): read video, per-face lip motion, assign separated
 # tracks to on-screen speakers. mediapipe's legacy FaceMesh is used when

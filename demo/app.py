@@ -33,8 +33,20 @@ def get_pipeline() -> Pipeline:
     return _PIPELINE["obj"]
 
 
+LANG_CHOICES = [
+    ("English", "en"), ("Spanish", "es"), ("French", "fr"), ("German", "de"),
+    ("Italian", "it"), ("Portuguese", "pt"), ("Russian", "ru"),
+    ("Chinese", "zh-cn"), ("Hindi", "hi"), ("Japanese", "ja"),
+    ("Korean", "ko"), ("Arabic", "ar"),
+]
+
+
 def _fan_out(out, label="Speaker"):
-    """Turn a pipeline result dict into the fixed UI output slots."""
+    """Turn a pipeline result dict into the fixed UI output slots.
+
+    The last slot repopulates the voice-clone speaker picker with this run's
+    speakers, so cloning works off whichever tab was used last.
+    """
     sr, n = out["sr"], out["num_speakers"]
     src = out.get("face_source")
     status = (f"Detected **{n}** {label.lower()}(s) in {out['duration']:.1f}s"
@@ -52,7 +64,33 @@ def _fan_out(out, label="Speaker"):
                           visible=True)]
         else:
             results += [gr.update(visible=False)] * 4
+
+    choices = [f"{label} {i + 1}" for i in range(n)]
+    results.append(gr.update(choices=choices,
+                             value=choices[0] if choices else None,
+                             interactive=bool(choices)))
     return results
+
+
+def clone_voice_fn(text, speaker_label, language_label):
+    """Speak `text` in a separated speaker's voice (XTTS v2 zero-shot)."""
+    if not text or not text.strip():
+        raise gr.Error("Enter some text to synthesise.")
+    if not speaker_label:
+        raise gr.Error("No speakers yet — run a separation first.")
+    try:
+        speaker_idx = int(str(speaker_label).split()[-1]) - 1
+    except (ValueError, IndexError):
+        speaker_idx = 0
+    language = dict(LANG_CHOICES).get(language_label, "en")
+    try:
+        wav, sr = get_pipeline().clone_voice(text.strip(), speaker_idx,
+                                             language)
+    except (RuntimeError, ValueError, ImportError) as exc:
+        raise gr.Error(str(exc))
+    except Exception as exc:
+        raise gr.Error(f"TTS failed: {exc}")
+    return gr.update(value=(sr, wav), visible=True)
 
 
 def separate(audio_path, sensitivity, count_choice):
@@ -118,7 +156,6 @@ def build_ui() -> gr.Blocks:
                             info="Raise if voices merge; lower if one splits.")
                         btn = gr.Button("Separate", variant="primary")
                 out_a = _output_block()
-                btn.click(separate, [inp, sensitivity, count_choice], out_a)
 
             with gr.Tab("Video (audio-visual)"):
                 gr.Markdown("Upload a video of people talking. The on-screen "
@@ -134,7 +171,30 @@ def build_ui() -> gr.Blocks:
                                  "auto-detect with mediapipe).")
                         vbtn = gr.Button("Separate (AV)", variant="primary")
                 out_v = _output_block()
-                vbtn.click(separate_video, [vinp, nfaces], out_v)
+
+        # Voice cloning works off the most recent separation from EITHER tab:
+        # the separated track itself is the voice reference.
+        with gr.Accordion("Voice Clone TTS (XTTS v2)", open=False):
+            gr.Markdown("Type any text and hear it in a separated speaker's "
+                        "voice. Run a separation first. The XTTS v2 model "
+                        "(~1.8 GB) downloads and loads on first use.")
+            with gr.Row():
+                tts_speaker = gr.Dropdown(choices=[], label="Voice",
+                                          interactive=False)
+                tts_lang = gr.Dropdown(
+                    choices=[name for name, _ in LANG_CHOICES],
+                    value="English", label="Language")
+            tts_text = gr.Textbox(label="Text to speak", lines=2,
+                                  placeholder="Type something...")
+            tts_btn = gr.Button("Clone voice", variant="secondary")
+            tts_audio = gr.Audio(label="Synthesised speech", visible=False)
+            tts_btn.click(clone_voice_fn, [tts_text, tts_speaker, tts_lang],
+                          tts_audio)
+
+        # The speaker picker is the last output slot of each separation.
+        btn.click(separate, [inp, sensitivity, count_choice],
+                  out_a + [tts_speaker])
+        vbtn.click(separate_video, [vinp, nfaces], out_v + [tts_speaker])
     return demo
 
 

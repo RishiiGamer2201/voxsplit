@@ -202,6 +202,23 @@ def load_longform_models(orpit_ckpt: Path, clf_ckpt: Path, ecapa_dir: Path,
         source=init_model, savedir=str(savedir),
         run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
     neutralize_lazy_modules()
+
+    # Missing weights are a hard error, never a silent fallback: without the
+    # OR-PIT checkpoint the heads are not "one-and-rest" (recursion is
+    # meaningless), and a stubbed classifier would make blind separation return
+    # the untouched mixture while still looking like it worked. Fail loudly and
+    # say how to fix it (README "Setup on a new device", step 6).
+    if not orpit_ckpt.is_file():
+        raise FileNotFoundError(
+            f"OR-PIT checkpoint not found: {orpit_ckpt}. Checkpoints are not "
+            f"in git — copy them from the training machine (see README setup "
+            f"step 6).")
+    if not clf_ckpt.is_file():
+        raise FileNotFoundError(
+            f"Count/stop classifier not found: {clf_ckpt}. Checkpoints are not "
+            f"in git — copy them from the training machine (see README setup "
+            f"step 6).")
+
     oc = torch.load(str(orpit_ckpt), map_location=device)
     enc, mn, dec = sep.mods.encoder, sep.mods.masknet, sep.mods.decoder
     enc.load_state_dict(oc["encoder"])
@@ -215,11 +232,24 @@ def load_longform_models(orpit_ckpt: Path, clf_ckpt: Path, ecapa_dir: Path,
     clf.load_state_dict(cc["model"])
     clf.to(device).eval()
 
+    def prob_multi_fn(sig: np.ndarray) -> float:
+        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
+        return float(clf.prob_multi(x)[0])
+
+    # ECAPA, on the other hand, is safe to auto-download (kept from the fork):
+    # it is a public pretrained model, not one of our trained checkpoints.
     if not (ecapa_dir / "embedding_model.ckpt").is_file():
-        raise FileNotFoundError(
-            f"ECAPA weights not found in {ecapa_dir}. Pre-fetch once with "
-            f"huggingface_hub.snapshot_download('speechbrain/"
-            f"spkrec-ecapa-voxceleb', local_dir='{ecapa_dir}').")
+        print(f"Downloading ECAPA weights from HuggingFace to {ecapa_dir}...")
+        try:
+            from huggingface_hub import snapshot_download
+            snapshot_download('speechbrain/spkrec-ecapa-voxceleb', local_dir=str(ecapa_dir))
+        except Exception as e:
+            print(f"Failed to download ECAPA weights: {e}")
+            raise FileNotFoundError(
+                f"ECAPA weights not found in {ecapa_dir}. Pre-fetch once with "
+                f"huggingface_hub.snapshot_download('speechbrain/"
+                f"spkrec-ecapa-voxceleb', local_dir='{ecapa_dir}').")
+
     ecapa = EncoderClassifier.from_hparams(
         source=str(ecapa_dir), savedir=str(ecapa_dir),
         run_opts={"device": device}, local_strategy=LocalStrategy.COPY)
@@ -230,9 +260,7 @@ def load_longform_models(orpit_ckpt: Path, clf_ckpt: Path, ecapa_dir: Path,
             est = separate_forward(enc, mn, dec, x)
         return est.cpu().numpy()[0].T
 
-    def prob_multi_fn(sig: np.ndarray) -> float:
-        x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)
-        return float(clf.prob_multi(x)[0])
+    # prob_multi_fn is defined above, next to the classifier it closes over.
 
     def embed_fn(sig: np.ndarray) -> np.ndarray:
         x = torch.from_numpy(np.ascontiguousarray(sig)).unsqueeze(0).to(device)

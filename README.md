@@ -154,6 +154,15 @@ Two tabs:
 
 Per speaker: player, spectrogram, transcript, plus a speaking timeline.
 
+**Voice Clone TTS (optional).** After any separation, the "Voice Clone TTS"
+panel speaks typed text in a chosen speaker's voice (XTTS v2, 12 languages) —
+the separated track is the voice reference, so no extra recording is needed.
+It is **opt-in**: `pip install coqui-tts` (see the warning in
+`requirements.txt` — it can downgrade torch, so prefer a separate env, and
+re-run `python src/check_env.py` afterwards). Without it, everything else works
+and the panel just reports that the package is missing. XTTS v2 weights are
+non-commercial (Coqui Public Model License).
+
 ### Command line
 ```powershell
 # short clip, unknown count
