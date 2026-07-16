@@ -37,11 +37,13 @@ tables, ablations, failure analysis, and plots in [REPORT.md](REPORT.md).
 
 ```powershell
 conda activate voxsplit
-python demo/app.py            # http://localhost:7860, upload audio, Separate
+python demo/app.py            # http://localhost:7860
 ```
-Auto-detects the speaker count; "Speaker count" dropdown forces an exact count,
-"Split sensitivity" nudges the auto count. Per speaker: player, spectrogram,
-transcript, plus a speaking timeline.
+Two tabs: **Audio** (upload a recording) and **Video (audio-visual)** (upload a
+video — on-screen faces set the count and lip motion assigns each track to its
+speaker). Audio tab auto-detects the count, with a "Speaker count" force option
+and a "Split sensitivity" nudge. Per speaker: player, spectrogram, transcript,
+plus a speaking timeline.
 
 ## Machine
 NVIDIA RTX 5070 Ti (16 GB, Blackwell/sm_120), Intel Core Ultra 7 265K, 32 GB RAM, Windows 11.

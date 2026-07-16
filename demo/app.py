@@ -33,15 +33,30 @@ def get_pipeline() -> Pipeline:
     return _PIPELINE["obj"]
 
 
-def separate(audio_path, sensitivity, count_choice):
-    """Run the pipeline and fan the results out into the fixed UI slots.
+def _fan_out(out, label="Speaker"):
+    """Turn a pipeline result dict into the fixed UI output slots."""
+    sr, n = out["sr"], out["num_speakers"]
+    src = out.get("face_source")
+    status = (f"Detected **{n}** {label.lower()}(s) in {out['duration']:.1f}s"
+              + (f" (faces via {src})" if src else
+                 f" (input {out['orig_sr']} Hz)") + ".")
+    results = [status, out["input_fig"], out["timeline_fig"]]
+    for i in range(MAX_SPK):
+        if i < n:
+            results += [
+                gr.update(visible=True),
+                gr.update(value=(sr, out["tracks"][i]), visible=True,
+                          label=f"{label} {i + 1}"),
+                gr.update(value=out["speaker_figs"][i], visible=True),
+                gr.update(value=out["transcripts"][i] or "(no speech detected)",
+                          visible=True)]
+        else:
+            results += [gr.update(visible=False)] * 4
+    return results
 
-    `sensitivity` is 1 - recursion_threshold, so a higher slider value splits
-    more aggressively (finds more speakers). Use it if the auto-detected count
-    looks too low (voices merged) or too high (a speaker split in two).
-    `count_choice` "Auto" uses the classifier; a number forces exactly that many
-    speakers (skips the shaky count classifier), best for short clips.
-    """
+
+def separate(audio_path, sensitivity, count_choice):
+    """Audio tab: separate an uploaded recording (auto or forced count)."""
     if not audio_path:
         raise gr.Error("Please upload an audio file first.")
     recursion_threshold = float(np.clip(1.0 - sensitivity, 0.2, 0.7))
@@ -49,72 +64,77 @@ def separate(audio_path, sensitivity, count_choice):
     out = get_pipeline().process(audio_path,
                                  recursion_threshold=recursion_threshold,
                                  force_count=force_count)
-    sr = out["sr"]
-    n = out["num_speakers"]
+    return _fan_out(out)
 
-    status = (f"Detected **{n}** speaker(s) in {out['duration']:.1f}s "
-              f"(input {out['orig_sr']} Hz).")
-    results = [status, out["input_fig"], out["timeline_fig"]]
 
+def separate_video(video_path, num_faces):
+    """Video tab: audio-visual separation — video sets count, lips assign."""
+    if not video_path:
+        raise gr.Error("Please upload a video file first.")
+    try:
+        out = get_pipeline().process_video(video_path, int(num_faces))
+    except ValueError as exc:
+        raise gr.Error(str(exc))
+    return _fan_out(out, label="On-screen speaker")
+
+
+def _output_block():
+    """Build the shared status + spectrograms + per-speaker rows; return slots."""
+    status = gr.Markdown()
+    with gr.Row():
+        input_spec = gr.Plot(label="Input spectrogram")
+        timeline = gr.Plot(label="Speaking timeline")
+    outputs = [status, input_spec, timeline]
     for i in range(MAX_SPK):
-        if i < n:
-            audio = (sr, out["tracks"][i])
-            results += [
-                gr.update(visible=True),
-                gr.update(value=audio, visible=True, label=f"Speaker {i + 1}"),
-                gr.update(value=out["speaker_figs"][i], visible=True),
-                gr.update(value=out["transcripts"][i] or "(no speech detected)",
-                          visible=True),
-            ]
-        else:
-            results += [gr.update(visible=False), gr.update(visible=False),
-                        gr.update(visible=False), gr.update(visible=False)]
-    return results
+        with gr.Group(visible=False) as row:
+            gr.Markdown(f"### Speaker {i + 1}")
+            a = gr.Audio(label=f"Speaker {i + 1}")
+            with gr.Row():
+                s = gr.Plot(label="Spectrogram")
+                t = gr.Textbox(label="Transcript", lines=3)
+        outputs += [row, a, s, t]
+    return outputs
 
 
 def build_ui() -> gr.Blocks:
     with gr.Blocks(title="VoxSplit") as demo:
         gr.Markdown("# VoxSplit — multi-speaker speech separation\n"
-                    "Upload a recording where several people talk at once. "
-                    "VoxSplit finds how many speakers there are and returns a "
-                    "clean track, spectrogram, and transcript for each.")
-        with gr.Row():
-            inp = gr.Audio(type="filepath", label="Input recording")
-            with gr.Column():
-                status = gr.Markdown()
-                count_choice = gr.Dropdown(
-                    choices=["Auto"] + [str(i) for i in range(1, MAX_SPK + 1)],
-                    value="Auto", label="Speaker count",
-                    info="Auto detects the count; pick a number to force it "
-                         "(best for short clips, useful when Auto miscounts).")
-                sensitivity = gr.Slider(
-                    0.3, 0.8, value=0.5, step=0.05,
-                    label="Split sensitivity (Auto mode only)",
-                    info="Raise if voices are merged into one track; lower if "
-                         "one speaker is split into two.")
-                btn = gr.Button("Separate", variant="primary")
-        with gr.Row():
-            input_spec = gr.Plot(label="Input spectrogram")
-            timeline = gr.Plot(label="Speaking timeline")
-
-        rows, audios, specs, texts = [], [], [], []
-        for i in range(MAX_SPK):
-            with gr.Group(visible=False) as row:
-                gr.Markdown(f"### Speaker {i + 1}")
-                a = gr.Audio(label=f"Speaker {i + 1}")
+                    "Separate a recording where several people talk at once "
+                    "into one clean track per speaker, with spectrograms, "
+                    "transcripts, and a speaking timeline.")
+        with gr.Tabs():
+            with gr.Tab("Audio"):
                 with gr.Row():
-                    s = gr.Plot(label="Spectrogram")
-                    t = gr.Textbox(label="Transcript", lines=3)
-            rows.append(row)
-            audios.append(a)
-            specs.append(s)
-            texts.append(t)
+                    inp = gr.Audio(type="filepath", label="Input recording")
+                    with gr.Column():
+                        count_choice = gr.Dropdown(
+                            choices=["Auto"] + [str(i)
+                                                for i in range(1, MAX_SPK + 1)],
+                            value="Auto", label="Speaker count",
+                            info="Auto detects the count; a number forces it.")
+                        sensitivity = gr.Slider(
+                            0.3, 0.8, value=0.5, step=0.05,
+                            label="Split sensitivity (Auto mode only)",
+                            info="Raise if voices merge; lower if one splits.")
+                        btn = gr.Button("Separate", variant="primary")
+                out_a = _output_block()
+                btn.click(separate, [inp, sensitivity, count_choice], out_a)
 
-        outputs = [status, input_spec, timeline]
-        for r, a, s, t in zip(rows, audios, specs, texts):
-            outputs += [r, a, s, t]
-        btn.click(separate, inputs=[inp, sensitivity, count_choice],
-                  outputs=outputs)
+            with gr.Tab("Video (audio-visual)"):
+                gr.Markdown("Upload a video of people talking. The on-screen "
+                            "faces set the speaker count and each track is "
+                            "matched to its speaker by lip motion. Speakers "
+                            "should be in distinct left-to-right regions.")
+                with gr.Row():
+                    vinp = gr.Video(label="Input video")
+                    with gr.Column():
+                        nfaces = gr.Number(
+                            value=2, precision=0, label="Number of faces",
+                            info="How many people are on screen (0 = try to "
+                                 "auto-detect with mediapipe).")
+                        vbtn = gr.Button("Separate (AV)", variant="primary")
+                out_v = _output_block()
+                vbtn.click(separate_video, [vinp, nfaces], out_v)
     return demo
 
 

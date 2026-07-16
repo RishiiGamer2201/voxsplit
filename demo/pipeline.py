@@ -13,6 +13,8 @@ from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
+import torch
+import torchaudio.functional as AF
 
 _SRC = Path(__file__).resolve().parent.parent / "src" / "inference"
 sys.path.insert(0, str(_SRC))
@@ -75,17 +77,18 @@ class Pipeline:
                                    cluster_threshold=cluster_threshold,
                                    recursion_threshold=recursion_threshold,
                                    force_count=force_count)
+        return self._build_outputs(signal, tracks, orig_sr, transcribe_tracks)
 
+    def _build_outputs(self, signal, tracks, orig_sr, transcribe_tracks,
+                       label="Speaker") -> Dict:
+        """Spectrograms, transcripts, and a timeline for a set of tracks."""
         transcripts: List[str] = []
         segments: List[list] = []
         for tr in tracks:
             segments.append(speaking_segments(tr, MODEL_SR))
-            if transcribe_tracks:
-                transcripts.append(
-                    transcribe.transcribe_track(self.whisper, tr, MODEL_SR))
-            else:
-                transcripts.append("")
-
+            transcripts.append(
+                transcribe.transcribe_track(self.whisper, tr, MODEL_SR)
+                if transcribe_tracks else "")
         duration = len(signal) / MODEL_SR
         return {
             "sr": MODEL_SR,
@@ -94,11 +97,62 @@ class Pipeline:
             "num_speakers": len(tracks),
             "tracks": [np.asarray(t, dtype=np.float32) for t in tracks],
             "input_fig": spectrogram_fig(signal, MODEL_SR, "Input mixture"),
-            "speaker_figs": [spectrogram_fig(t, MODEL_SR, f"Speaker {i + 1}")
+            "speaker_figs": [spectrogram_fig(t, MODEL_SR, f"{label} {i + 1}")
                              for i, t in enumerate(tracks)],
             "transcripts": transcripts,
             "timeline_fig": plot_timeline(segments, duration),
         }
+
+    def process_video(self, video_path: str, num_faces: int = 0,
+                      transcribe_tracks: bool = True) -> Dict:
+        """Audio-visual: video sets the count, lip motion assigns tracks.
+
+        num_faces = 0 tries mediapipe to count faces, else falls back to a
+        2-speaker assumption; pass a number for the ROI-motion fallback.
+        """
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).resolve().parent.parent
+                                / "src" / "av"))
+        from separate_av import read_video  # noqa: E402
+        from lipmotion import (extract_face_motions,  # noqa: E402
+                               mediapipe_mouth_series)
+        from av_assign import audio_envelope, assign_tracks_to_faces  # noqa
+
+        frames, audio, sr, fps = read_video(Path(video_path))
+        if frames is None or audio is None:
+            raise ValueError("The video has no frames or no audio track.")
+
+        mp_faces = mediapipe_mouth_series(frames, max(num_faces or 5, 1))
+        n = len(mp_faces) if mp_faces else (num_faces or 2)
+
+        audio8k = audio
+        if sr != MODEL_SR:
+            audio8k = AF.resample(torch.from_numpy(audio.astype(np.float32)),
+                                  sr, MODEL_SR).numpy()
+
+        chunk_len, hop_len = int(4.0 * MODEL_SR), int(3.0 * MODEL_SR)
+        tracks = separate_longform(audio8k, self.fwd, self.pm, self.emb,
+                                   chunk_len, hop_len, force_count=n)
+
+        face_motions = mp_faces or extract_face_motions(frames, n)
+        envs = [audio_envelope(t, MODEL_SR, len(frames), fps) for t in tracks]
+        assignment, _ = assign_tracks_to_faces(
+            envs, [m for _, m in face_motions])
+
+        # Order tracks by face (left-to-right); unassigned tracks appended.
+        ordered = [None] * len(face_motions)
+        leftover = []
+        for t_idx, f_idx in enumerate(assignment):
+            if 0 <= f_idx < len(ordered) and ordered[f_idx] is None:
+                ordered[f_idx] = tracks[t_idx]
+            else:
+                leftover.append(tracks[t_idx])
+        ordered = [t for t in ordered if t is not None] + leftover
+
+        out = self._build_outputs(audio8k, ordered, sr, transcribe_tracks,
+                                  label="On-screen speaker")
+        out["face_source"] = "mediapipe" if mp_faces else "ROI fallback"
+        return out
 
 
 def main() -> int:
