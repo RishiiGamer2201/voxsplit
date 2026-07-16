@@ -7,8 +7,9 @@ Given a single-channel recording where **3 or more people speak at the same
 time**, output one clean audio track per speaker — the "cocktail party problem".
 The evaluation is on **audio inputs** with an **unknown number of speakers**, so
 the system must be audio-only and count-agnostic. This report summarizes the
-method, results, ablations, and honest limitations. Per-phase engineering
-detail is in [PLAN.md](PLAN.md); auto-generated result tables and plots are in
+method, results, ablations, and honest limitations. System diagrams are in
+[ARCHITECTURE.md](ARCHITECTURE.md); per-phase engineering detail is in
+[PLAN.md](PLAN.md); auto-generated result tables and plots are in
 [experiments/RESULTS.md](experiments/RESULTS.md).
 
 ## 2. Approach
