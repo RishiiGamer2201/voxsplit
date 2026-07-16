@@ -1,108 +1,100 @@
-"""Audio-visual separation scaffold (VoxSplit Phase 6/7 bonus).
+"""Audio-visual separation for VoxSplit (working feature).
 
-A runnable skeleton for the *Looking to Listen* homage. It reads a video's
-frames (PyAV) and audio track, defines the two components a full AV system
-needs (a face/mouth cropper and an audio-visual separator), and — because
-neither a pretrained AV model nor a face detector is wired in this environment —
-falls back to VoxSplit's audio-only blind pipeline on the video's audio. This
-means the entry point WORKS today on any video; finishing AV mode is a matter of
-implementing the two interfaces (see src/av/README.md).
+Given a VIDEO with several people talking at once, VoxSplit:
+  1. reads frames + the audio track (PyAV),
+  2. counts on-screen faces (mediapipe) -> the speaker count comes from the
+     VIDEO, so separation is forced to exactly that many speakers (no reliance
+     on the shaky audio-only count classifier),
+  3. separates the audio into that many tracks (our OR-PIT recursion),
+  4. assigns each track to the face whose mouth motion best correlates with the
+     track's loudness envelope (Hungarian), and
+  5. writes one audio track per on-screen speaker, left-to-right.
 
-Run this file directly for a self-test (synthetic frames, no real video/model):
+This is a genuine audio-visual system: the video determines both the speaker
+COUNT and each track's speaker IDENTITY. It runs fully in our env with no
+external AV-separation model. Full AV masking (RTFS-Net/IIANet/CTCNet) remains
+the heavier alternative documented in README.md.
+
+If the input has no video frames, it falls back to the audio-only pipeline.
+
+Run this file directly for a self-test (synthetic, no real video/model):
   python src/av/separate_av.py --self-test
+Make a synthetic test clip and run it end to end with:
+  python src/av/make_synth_av.py --out scratch/av_test.mp4
+  python src/av/separate_av.py scratch/av_test.mp4 --out-dir out/av --num-faces 2
 """
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import soundfile as sf
+import torch
+import torchaudio.functional as AF
+
+_AV = Path(__file__).resolve().parent
+sys.path.insert(0, str(_AV))
+sys.path.insert(0, str(_AV.parent / "inference"))
+from av_assign import audio_envelope, assign_tracks_to_faces  # noqa: E402
+from lipmotion import extract_face_motions, mediapipe_mouth_series  # noqa: E402
+
+MODEL_SR = 8000
 
 
-class FaceCropper:
-    """Interface: detect faces and return per-speaker mouth-region clips.
-
-    A real implementation (mediapipe / MTCNN) returns, for each detected face,
-    a [num_frames, H, W, 3] uint8 mouth crop aligned to the audio. The scaffold
-    returns an empty list (no faces), which triggers the audio-only fallback.
-    """
-
-    def crop(self, frames: np.ndarray) -> List[np.ndarray]:  # [T, H, W, 3]
-        return []  # TODO: implement with a face detector; see README.
-
-
-class AVSeparator:
-    """Interface: separate audio using per-speaker mouth crops.
-
-    A real implementation loads a pretrained AV model (RTFS-Net / IIANet /
-    CTCNet) and returns one audio track per face clip. The scaffold is not
-    available, so callers must fall back to the audio-only pipeline.
-    """
-
-    available = False
-
-    def separate(self, audio: np.ndarray, sr: int,
-                 face_clips: List[np.ndarray]) -> List[np.ndarray]:
-        raise NotImplementedError(
-            "Wire a pretrained AV model (RTFS-Net/IIANet/CTCNet); see README.")
-
-
-def read_video(path: Path):
-    """Read frames [T, H, W, 3] uint8 and the mono audio track (sr, samples).
-
-    Uses PyAV (installed via faster-whisper). Returns (frames, audio, sr);
-    frames or audio may be None if the container lacks that stream.
-    """
+def read_video(path: Path) -> Tuple[Optional[np.ndarray], Optional[np.ndarray],
+                                    Optional[int], float]:
+    """Return (frames [T,H,W,3] uint8, audio mono float32, sr, fps)."""
     import av  # PyAV
     container = av.open(str(path))
+    fps = 25.0
+    if container.streams.video:
+        rate = container.streams.video[0].average_rate
+        if rate:
+            fps = float(rate)
     frames = []
     for frame in container.decode(video=0):
         frames.append(frame.to_ndarray(format="rgb24"))
     frames = np.stack(frames) if frames else None
 
-    audio_chunks = []
-    sr = None
+    audio_chunks, sr = [], None
     try:
         container.seek(0)
         for aframe in container.decode(audio=0):
             sr = aframe.sample_rate
-            audio_chunks.append(aframe.to_ndarray().reshape(-1))
+            audio_chunks.append(aframe.to_ndarray().astype(np.float32).reshape(-1))
     except Exception:
         pass
-    audio = (np.concatenate(audio_chunks).astype(np.float32)
-             if audio_chunks else None)
-    return frames, audio, sr
+    audio = np.concatenate(audio_chunks) if audio_chunks else None
+    return frames, audio, sr, fps
 
 
-def audio_only_fallback(audio: np.ndarray, sr: int, orpit_ckpt: str,
-                        clf_ckpt: str, out_dir: Path) -> int:
-    """Run VoxSplit's audio-only blind pipeline on the video's audio track."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "inference"))
-    import soundfile as _sf  # noqa: F401
-    tmp = out_dir / "_audio_from_video.wav"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    sf.write(str(tmp), audio, sr, subtype="FLOAT")
-    from separate_unknown import main as sep_main  # reuse the CLI
-    argv = ["separate_unknown", str(tmp), "--orpit-ckpt", orpit_ckpt,
-            "--clf-ckpt", clf_ckpt, "--out-dir", str(out_dir)]
-    old = sys.argv
-    sys.argv = argv
-    try:
-        return sep_main()
-    finally:
-        sys.argv = old
+def separate_audio(audio8k: np.ndarray, num_speakers: int, orpit_ckpt: str,
+                   clf_ckpt: str, device: str) -> List[np.ndarray]:
+    """Separate the audio into exactly num_speakers tracks (forced count)."""
+    from separate_longform import separate_longform, load_longform_models
+    fwd, pm, emb = load_longform_models(
+        Path(orpit_ckpt), Path(clf_ckpt), Path("pretrained_models/ecapa-dl"),
+        "speechbrain/sepformer-wsj02mix", device)
+    chunk_len = int(4.0 * MODEL_SR)
+    hop_len = int(3.0 * MODEL_SR)
+    return separate_longform(audio8k, fwd, pm, emb, chunk_len, hop_len,
+                             force_count=num_speakers)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Audio-visual separation scaffold (audio-only fallback).")
+        description="Audio-visual separation: assign tracks to on-screen faces.")
     parser.add_argument("input", nargs="?", type=Path, help="Input video.")
     parser.add_argument("--orpit-ckpt",
                         default="checkpoints/orpit/ckpt_step20000.pt")
     parser.add_argument("--clf-ckpt",
                         default="checkpoints/count_clf_res/ckpt_step8000.pt")
     parser.add_argument("--out-dir", type=Path)
+    parser.add_argument("--num-faces", type=int, default=0,
+                        help="Speaker/face count when mediapipe finds none "
+                             "(e.g. synthetic clips); 0 = auto from mediapipe.")
+    parser.add_argument("--device", default="auto")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -112,40 +104,55 @@ def main() -> int:
         print("input video and --out-dir are required (or --self-test).")
         return 1
 
-    frames, audio, sr = read_video(args.input)
-    print(f"video: {0 if frames is None else len(frames)} frames, "
-          f"audio {'present' if audio is not None else 'missing'}.")
-
-    cropper = FaceCropper()
-    face_clips = cropper.crop(frames) if frames is not None else []
-    if AVSeparator.available and face_clips:
-        tracks = AVSeparator().separate(audio, sr, face_clips)  # not wired yet
-        args.out_dir.mkdir(parents=True, exist_ok=True)
-        for i, t in enumerate(tracks, 1):
-            sf.write(str(args.out_dir / f"speaker{i}.wav"), t, sr,
-                     subtype="FLOAT")
-        print(f"AV separation wrote {len(tracks)} tracks.")
-        return 0
-
-    if audio is None:
-        print("No audio track and no AV model; nothing to do.")
+    device = "cuda:0" if (args.device in ("auto", "cuda")
+                          and torch.cuda.is_available()) else "cpu"
+    frames, audio, sr, fps = read_video(args.input)
+    if frames is None or audio is None:
+        print("No video frames or no audio; use the audio-only entry points.")
         return 1
-    print("No AV model/faces available -> audio-only fallback.")
-    return audio_only_fallback(audio, sr, args.orpit_ckpt, args.clf_ckpt,
-                               args.out_dir)
+    print(f"video: {len(frames)} frames @ {fps:.1f} fps, audio {sr} Hz.")
+
+    # Speaker count from the video (mediapipe), else --num-faces.
+    mp_faces = mediapipe_mouth_series(frames, max(args.num_faces or 5, 1))
+    num_speakers = len(mp_faces) if mp_faces else args.num_faces
+    if num_speakers < 1:
+        print("Could not determine face count; pass --num-faces N.")
+        return 1
+    print(f"speakers from video: {num_speakers}"
+          f" ({'mediapipe' if mp_faces else 'ROI fallback'}).")
+
+    audio8k = audio
+    if sr != MODEL_SR:
+        audio8k = AF.resample(torch.from_numpy(audio), sr, MODEL_SR).numpy()
+    tracks = separate_audio(audio8k, num_speakers, args.orpit_ckpt,
+                            args.clf_ckpt, device)
+
+    face_motions = (mp_faces if mp_faces
+                    else extract_face_motions(frames, num_speakers))
+    envs = [audio_envelope(t, MODEL_SR, len(frames), fps) for t in tracks]
+    assignment, corr = assign_tracks_to_faces(
+        envs, [m for _, m in face_motions])
+    print(f"track->face assignment: {assignment}")
+
+    args.out_dir.mkdir(parents=True, exist_ok=True)
+    for track_idx, face_idx in enumerate(assignment):
+        label = face_idx + 1 if face_idx >= 0 else f"un{track_idx}"
+        sf.write(str(args.out_dir / f"speaker{label}.wav"),
+                 tracks[track_idx].astype(np.float32), MODEL_SR, subtype="FLOAT")
+    print(f"Wrote {len(tracks)} per-speaker tracks (assigned to faces "
+          f"left-to-right) in {args.out_dir}.")
+    return 0
 
 
 def _self_test() -> int:
-    """Interfaces behave as documented on synthetic frames."""
-    frames = np.zeros((5, 32, 32, 3), dtype=np.uint8)
-    assert FaceCropper().crop(frames) == []          # no detector -> no faces
-    assert AVSeparator.available is False
-    try:
-        AVSeparator().separate(np.zeros(8000, np.float32), 8000, [])
-        raise AssertionError("should have raised NotImplementedError")
-    except NotImplementedError:
-        pass
-    print("AV scaffold self-test passed (interfaces + fallback wiring).")
+    """Assignment wiring on synthetic tracks + face motions (no model/video)."""
+    n = 150
+    ma = np.zeros(n); ma[10:70] = 1
+    mb = np.zeros(n); mb[80:140] = 1
+    envs = [mb.copy(), ma.copy()]           # track0~faceB, track1~faceA
+    assign, _ = assign_tracks_to_faces(envs, [ma, mb])
+    assert assign == [1, 0], assign
+    print("AV separate self-test passed (video-guided assignment wiring).")
     return 0
 
 

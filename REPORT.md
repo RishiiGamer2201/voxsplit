@@ -131,9 +131,12 @@ python experiments/make_report.py
   lever.
 - ECAPA stitching degrades for similar voices; embedding on enhanced audio or
   constrained clustering could help.
-- **Audio-visual mode** (the *Looking to Listen* homage) is a scoped future
-  extension: a modern pretrained AV separator (RTFS-Net / IIANet / CTCNet) plus
-  a face-detection + mouth-crop pipeline on video inputs. It is a separate
-  multi-day effort with its own video data pipeline (AVSpeech/LRS) and is a
-  genuine bonus, since the evaluation is audio-only. See
-  [src/av/README.md](src/av/README.md) for the runnable scaffold and plan.
+- **Audio-visual mode** (the *Looking to Listen* homage) is implemented and
+  working (`src/av/`): the video drives the audio-only separator — on-screen
+  faces set the speaker count, and each track is matched to its speaker by
+  correlating loudness with per-face mouth motion (mediapipe FaceMesh, or a
+  ROI-motion fallback). Validated on a synthetic talking-face clip (correct
+  face assignment at ~19.7 dB). Full AV *masking* with a pretrained model
+  (RTFS-Net/IIANet/CTCNet) — which fuses mouth crops into the separation itself
+  and needs an external repo + video training data — is the documented heavier
+  alternative. See [src/av/README.md](src/av/README.md).

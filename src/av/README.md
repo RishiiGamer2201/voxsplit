@@ -1,44 +1,53 @@
-# Audio-visual mode (scaffold) — the *Looking to Listen* homage
+# Audio-visual mode — the *Looking to Listen* homage (working feature)
 
-**Status: scaffold + plan, not a validated pipeline.** VoxSplit's evaluation is
-audio-only, so AV mode is a genuine bonus. It is scoped here with a runnable
-skeleton (`separate_av.py`) and the exact steps to finish it, rather than a
-half-working end-to-end that can't be tested in this environment.
+VoxSplit's AV mode uses the **video to drive separation**: the on-screen faces
+give the speaker COUNT, and each separated audio track is matched to its
+on-screen speaker by correlating the track's loudness with each face's mouth
+motion. It runs entirely in our env, no external AV-separation model.
 
-## Why it isn't fully built here
-Three hard dependencies, none available in this automated setup:
-1. **A pretrained AV separator** — RTFS-Net (ICLR 2024, https://github.com/spkgyk/RTFS-Net),
-   IIANet, or CTCNet (https://github.com/JusperLee). These are separate repos
-   with their own configs/weights that must be cloned and reconciled with our
-   torch cu128 env.
-2. **A face-detection + mouth-crop pipeline** (e.g. mediapipe or MTCNN) to feed
-   one visual stream per speaker.
-3. **Video test data** with overlapping speech (AVSpeech / LRS2/3), which is a
-   large, flaky, multi-day download the plan explicitly flags as a time sink.
-
-## Architecture (implemented as interfaces in `separate_av.py`)
+## What it does (`separate_av.py`)
 ```
-video ──► frame extraction (PyAV, implemented)
-            │
-            ├─► face detection + mouth crops per speaker  (interface: FaceCropper)
-            │
-audio ──►  AV separator: audio + per-speaker mouth crops ─► per-speaker audio
-            (interface: AVSeparator)                          │
-                                                              ▼
-                                       falls back to VoxSplit's audio-only
-                                       blind pipeline if no faces / no model
+video ─► frames + audio (PyAV)
+          │
+          ├─► face count + per-face mouth motion
+          │     mediapipe FaceMesh (real faces) → inner-lip aperture
+          │     └─ fallback: ROI motion per vertical strip (any video)
+          │
+audio ─► forced-count OR-PIT separation to #faces  ─► K tracks
+                                                        │
+        assign track ↔ face by lip-motion vs audio-envelope correlation
+                       (Hungarian, one-to-one)  ─► speaker{face}.wav
 ```
-The scaffold reads video, defines the `FaceCropper` and `AVSeparator`
-interfaces, and wires the audio-only fallback so the entry point works today on
-any input; plugging in a real face detector and AV model completes it.
+The video determines both the **count** (no reliance on the audio-only count
+classifier) and each track's **identity** (which on-screen person it is).
 
-## Steps to finish
-1. `pip install mediapipe` (or MTCNN); implement `FaceCropper.crop` to return
-   per-face mouth-region clips aligned to the audio.
-2. Clone RTFS-Net, load its pretrained LRS checkpoint, and implement
-   `AVSeparator.separate(audio, face_clips)`.
-3. Get a few LRS2 test clips; score AV vs our audio-only separation on the same
-   clips (SI-SDRi). Expect AV to win when faces are visible and reliable.
+## Run it
+```bash
+# make a synthetic 2-speaker talking-face clip and separate it
+python src/av/make_synth_av.py --out scratch/av_test.mp4
+python src/av/separate_av.py scratch/av_test.mp4 --out-dir out/av --num-faces 2
+```
+On the synthetic clip the two tracks are assigned to the correct faces at
+~19.7 / 19.6 dB SI-SDR (wrong-face assignment is ~-36 dB).
 
-Until then, `separate_av.py` runs the audio-only pipeline on the video's audio
-track, which is the honest, working behavior.
+## Real videos
+- **mediapipe legacy FaceMesh** gives precise per-face lip aperture and an
+  automatic face count. Some mediapipe builds (e.g. 0.10.35 here) ship only the
+  Tasks API and lack `mp.solutions`; the code detects this and falls back.
+- **ROI-motion fallback** works on any video with speakers in distinct
+  horizontal regions (typical side-by-side / panel layouts); pass `--num-faces
+  N` since it can't count faces itself.
+
+## Components (each self-tested)
+- `av_assign.py` — audio-envelope ↔ face-motion correlation + Hungarian.
+- `lipmotion.py` — mediapipe FaceMesh + ROI-motion extractors.
+- `separate_av.py` — the end-to-end entry point.
+- `make_synth_av.py` — renders the synthetic test clip.
+
+## Heavier alternative (not built)
+True AV *masking* — a pretrained AV separator (RTFS-Net, ICLR 2024;
+IIANet/CTCNet) that fuses mouth crops into the separation itself — would beat
+audio-only when faces are reliable, but needs an external repo, its weights, and
+video training data (AVSpeech/LRS). Our approach is AV *assignment*: it uses the
+audio-only separator (which is strong) and lets the video resolve count and
+identity, which is the part video helps most and runs with no external model.

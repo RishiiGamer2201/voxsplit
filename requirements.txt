@@ -40,3 +40,11 @@ wandb==0.28.0
 # latter needs numba/llvmlite, which is blocked here by a Windows policy.
 gradio==6.20.0
 faster-whisper==1.2.1
+
+# Audio-visual mode (src/av): read video, per-face lip motion, assign separated
+# tracks to on-screen speakers. mediapipe's legacy FaceMesh is used when
+# available; otherwise the ROI-motion fallback runs (no mediapipe needed).
+opencv-python==5.0.0.93
+imageio==2.37.3
+imageio-ffmpeg==0.6.0
+mediapipe==0.10.35
