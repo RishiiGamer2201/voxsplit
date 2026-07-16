@@ -123,31 +123,85 @@ artifact-laden residuals at multiple depths — a clean-trained one fails
 
 ## 6. Repository layout
 
+Entry points marked ★. Everything under `checkpoints/`, `pretrained_models/`,
+and the raw audio in `data/` is gitignored (see README setup).
+
 ```
+README.md  ARCHITECTURE.md  REPORT.md  PLAN.md      docs (start here)
+requirements.txt
+
+demo/
+  app.py                       ★ Gradio web demo (Audio + Video tabs)
+  pipeline.py                  ★ shared end-to-end Pipeline (also a CLI)
+
 src/
-  mixing/      make_mixture.py           mixture generation (2..N speakers)
-  data/        build_eval_set.py         frozen eval manifest (committed)
-               realize_eval_set.py       manifest -> audio (reproducible)
-               make_conditions.py        noise / reverb variants
-  models/      tfgridnet.py              from-scratch TF baseline
-               count_classifier.py       count / stop CNN
-  train/       train_orpit.py            OR-PIT fine-tune (+ --resume, augment)
-               train_pit.py              fixed-N uPIT (+ masknet head expansion)
-               train_count_classifier.py residual-domain count classifier
-               augment.py                WHAM noise + RIR reverb
-               orpit_loss.py, pit_loss.py, mix_dataset.py, wandb_logger.py
-  inference/   separate_unknown.py       single file, unknown count
-               separate_longform.py      long audio + ECAPA stitching (main CLI)
-               separate_recursive_blind.py  blind recursion core
-               transcribe.py, timeline.py, audio_io.py, enhance.py
-  av/          separate_av.py            audio-visual entry point
-               lipmotion.py, av_assign.py, make_synth_av.py
-  eval/        metrics.py, evaluate_set.py   SI-SDR / PESQ / STOI + PIT matching
-demo/          app.py (Gradio: Audio + Video tabs), pipeline.py
-experiments/   *.csv logs, make_report.py, RESULTS.md, plots/
-data/          manifests committed; audio gitignored (regenerate from manifest)
-checkpoints/   trained weights (gitignored — see README setup)
+  check_env.py                 ★ environment + GPU sanity check
+  mixing/
+    make_mixture.py            mixture generation (2..N speakers), source scanning
+  data/
+    build_eval_set.py          frozen eval manifest (JSON, committed)
+    realize_eval_set.py        manifest -> byte-identical audio
+    make_conditions.py         WHAM-noise / reverb manifest variants
+  models/
+    count_classifier.py        SpeakerCountCNN — count / stop (P(2+ speakers))
+    tfgridnet.py               compact TF-GridNet (from-scratch baseline)
+  train/
+    train_orpit.py             OR-PIT fine-tune (--resume, --noise-dir/--reverb)
+    train_pit.py               fixed-N uPIT + masknet head expansion (3->N)
+    train_count_classifier.py  count classifier (--orpit-ckpt = residual domain)
+    train_convtasnet.py        Conv-TasNet from scratch (learning baseline)
+    train_tfgridnet.py         TF-GridNet from scratch (TF-domain baseline)
+    mix_dataset.py             on-the-fly mixtures
+    augment.py                 WHAM noise + pooled-RIR reverb
+    orpit_loss.py              one-and-rest SI-SNR
+    pit_loss.py                utterance-level PIT
+    wandb_logger.py            optional W&B (off by default)
+  inference/
+    separate_longform.py       ★ MAIN CLI — long audio + ECAPA stitching
+    separate_unknown.py        ★ single file, unknown count
+    separate_recursive_blind.py  blind recursion core (+ force_count)
+    audio_io.py                mono / 8 kHz / peak-normalize
+    transcribe.py              per-speaker Whisper (faster-whisper)
+    timeline.py                speaking timeline via energy VAD
+    enhance.py                 MetricGAN+ post-filter (ablation: it hurts)
+    separate.py                pretrained SepFormer, single file
+    separate_set.py            batch eval-set inference (pretrained)
+    separate_orpit_set.py      batch OR-PIT (2-spk direct)
+    separate_orpit_recursive_set.py  batch recursion, oracle count
+    separate_finetuned_set.py  batch fixed-N (sepformer / convtasnet)
+    separate_tfgridnet_set.py  batch TF-GridNet
+    separate_maxn_set.py       max-N + silence detection (unknown-count baseline)
+    separate_mossformer2.py    MossFormer2 via the separate clearvoice env
+  av/                          ★ audio-visual mode
+    separate_av.py             ★ video -> count + separate + assign
+    lipmotion.py               mediapipe FaceMesh / ROI-motion fallback
+    av_assign.py               envelope <-> lip-motion correlation + Hungarian
+    make_synth_av.py           renders a synthetic talking-face test clip
+    README.md                  AV design + how to finish full AV masking
+  eval/
+    metrics.py                 SI-SDR, PESQ, STOI, best-permutation matching
+    evaluate_set.py            batch scoring, aggregated per speaker count
+    evaluate.py                single-mixture scoring
+
+experiments/
+  make_report.py               ★ regenerates RESULTS.md + plots from the CSVs
+  RESULTS.md  plots/           auto-generated tables and figures
+  eval_set_results.csv         every model x level result (source of truth)
+  eval_set_conditions.csv      degradation conditions
+  phase1_*.csv                 early pretrained-baseline logs
+  phase4_count_predictions.csv per-mixture blind count predictions
+
+scripts/                       phase smoke tests
+data/                          manifests committed; audio gitignored
+checkpoints/                   trained weights — gitignored, see README setup
+pretrained_models/             downloaded weights (ECAPA, SepFormer) — gitignored
 ```
+
+Which files map to which diagram above:
+- **§1 overview** → `audio_io.py`, `separate_longform.py`, `separate_recursive_blind.py`, `transcribe.py`, `timeline.py`
+- **§2 recursion** → `separate_recursive_blind.py`, `count_classifier.py`, `train_orpit.py`
+- **§3 audio-visual** → `src/av/*`
+- **§4 training** → `src/train/*`, `src/models/*`
 
 ---
 
