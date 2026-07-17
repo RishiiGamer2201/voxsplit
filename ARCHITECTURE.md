@@ -25,7 +25,13 @@ flowchart TD
     J --> K["Whisper transcript<br/>per speaker"]
     J --> L["Energy VAD<br/>speaking timeline"]
     J --> M["Spectrograms<br/>before / after"]
+    J --> N["Voice Clone TTS (opt-in)<br/>XTTS v2 — the separated track<br/>is the voice reference"]
+    T["Any text + language"] --> N
+    N --> O["Speech in that<br/>speaker's voice"]
 ```
+
+A video input takes the same path, but the on-screen faces supply the speaker
+count and the track-to-speaker assignment — see §3.
 
 ---
 
@@ -116,8 +122,13 @@ artifact-laden residuals at multiple depths — a clean-trained one fails
 | Cross-chunk identity | **ECAPA-TDNN** | `speechbrain/spkrec-ecapa-voxceleb` → `pretrained_models/ecapa-dl` |
 | Transcription | **faster-whisper** (`base.en`) | auto-downloaded |
 | Face landmarks | **mediapipe FaceMesh** (+ ROI fallback) | pip `mediapipe` |
+| Voice cloning (opt-in) | **XTTS v2** via `coqui-tts` | auto-downloaded (~1.8 GB), non-commercial licence |
 | Assignment / stitching | Hungarian on cosine / correlation | `scipy.optimize.linear_sum_assignment` |
 | Fixed-N baselines | uPIT SepFormer 4- and 5-speaker | `checkpoints/pit4_libri`, `pit5_libri` |
+
+Everything except XTTS v2 is required; voice cloning is lazily imported so the
+rest of the system runs without `coqui-tts` installed (it pins torch and can
+downgrade the cu128 build — see `requirements.txt`).
 
 ---
 
@@ -178,6 +189,8 @@ src/
     av_assign.py               envelope <-> lip-motion correlation + Hungarian
     make_synth_av.py           renders a synthetic talking-face test clip
     README.md                  AV design + how to finish full AV masking
+  tts/
+    voice_clone.py             XTTS v2 zero-shot cloning (opt-in, lazy import)
   eval/
     metrics.py                 SI-SDR, PESQ, STOI, best-permutation matching
     evaluate_set.py            batch scoring, aggregated per speaker count
@@ -198,10 +211,11 @@ pretrained_models/             downloaded weights (ECAPA, SepFormer) — gitigno
 ```
 
 Which files map to which diagram above:
-- **§1 overview** → `audio_io.py`, `separate_longform.py`, `separate_recursive_blind.py`, `transcribe.py`, `timeline.py`
+- **§1 overview** → `audio_io.py`, `separate_longform.py`, `separate_recursive_blind.py`, `transcribe.py`, `timeline.py`, `tts/voice_clone.py`
 - **§2 recursion** → `separate_recursive_blind.py`, `count_classifier.py`, `train_orpit.py`
 - **§3 audio-visual** → `src/av/*`
 - **§4 training** → `src/train/*`, `src/models/*`
+- All of it is wired together by `demo/pipeline.py` (one `Pipeline`, models loaded once) and exposed by `demo/app.py`.
 
 ---
 

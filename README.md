@@ -57,7 +57,14 @@ flowchart TD
     J --> K["Whisper transcript<br/>per speaker"]
     J --> L["Energy VAD<br/>speaking timeline"]
     J --> M["Spectrograms<br/>before / after"]
+    J --> N["Voice Clone TTS (opt-in)<br/>XTTS v2 — the separated track<br/>is the voice reference"]
+    T["Any text + language"] --> N
+    N --> O["Speech in that<br/>speaker's voice"]
 ```
+
+Video inputs take the same path, but the on-screen faces supply the speaker
+count and the track-to-speaker assignment (see
+[ARCHITECTURE.md §3](ARCHITECTURE.md)).
 
 ---
 
@@ -257,6 +264,8 @@ src/
     av_assign.py               envelope <-> lip-motion correlation + Hungarian
     make_synth_av.py           renders a synthetic talking-face test clip
     README.md                  AV design + how to finish full AV masking
+  tts/
+    voice_clone.py             XTTS v2 zero-shot cloning (opt-in, lazy import)
   eval/
     metrics.py                 SI-SDR, PESQ, STOI, best-permutation matching
     evaluate_set.py            batch scoring, aggregated per speaker count
