@@ -115,7 +115,7 @@ class Pipeline:
         }
 
     def _save_speaker_wavs(self, tracks: List[np.ndarray], sr: int) -> List[str]:
-        """Write each track to a temp WAV; these are the voice-clone references.
+        """Write a clean, active slice of each track to a temp WAV for voice-cloning.
 
         Temp files from the previous run are removed first.
         """
@@ -129,7 +129,42 @@ class Pipeline:
             fd, path = tempfile.mkstemp(suffix=f"_spk{i + 1}.wav",
                                         prefix="voxsplit_")
             os.close(fd)
-            sf.write(path, wav, sr)
+
+            # Smart reference selection: extract 6-10 seconds of clean speech
+            ref_wav = wav
+            try:
+                segs = speaking_segments(wav, sr)
+                if segs:
+                    # Sort segments by duration descending
+                    sorted_segs = sorted(segs, key=lambda s: s[1] - s[0], reverse=True)
+                    longest = sorted_segs[0]
+                    dur = longest[1] - longest[0]
+                    if dur >= 6.0:
+                        # Perfect, use the first 8 seconds of this segment
+                        start_idx = int(longest[0] * sr)
+                        end_idx = int((longest[0] + min(dur, 8.0)) * sr)
+                        ref_wav = wav[start_idx:end_idx]
+                    else:
+                        # Concatenate the longest segments to reach ~8 seconds
+                        selected = []
+                        total_dur = 0.0
+                        for s, e in sorted_segs:
+                            selected.append(wav[int(s * sr):int(e * sr)])
+                            total_dur += (e - s)
+                            if total_dur >= 8.0:
+                                break
+                        if selected:
+                            ref_wav = np.concatenate(selected)[:int(8.0 * sr)]
+                else:
+                    # Fallback to the first 8 seconds if no speech detected
+                    if len(wav) > int(8.0 * sr):
+                        ref_wav = wav[:int(8.0 * sr)]
+            except Exception as e:
+                print(f"Warning: Smart reference selection failed for speaker {i + 1}: {e}")
+                # Fallback to entire track
+                ref_wav = wav
+
+            sf.write(path, ref_wav, sr)
             paths.append(path)
         self._speaker_wavs = paths
         return paths
@@ -187,7 +222,7 @@ class Pipeline:
 
         face_motions = mp_faces or extract_face_motions(frames, n)
         envs = [audio_envelope(t, MODEL_SR, len(frames), fps) for t in tracks]
-        assignment, _ = assign_tracks_to_faces(
+        assignment, corr = assign_tracks_to_faces(
             envs, [m for _, m in face_motions])
 
         # Order tracks by face (left-to-right); unassigned tracks appended.
@@ -203,6 +238,7 @@ class Pipeline:
         out = self._build_outputs(audio8k, ordered, sr, transcribe_tracks,
                                   label="On-screen speaker")
         out["face_source"] = "mediapipe" if mp_faces else "ROI fallback"
+
         return out
 
 

@@ -82,7 +82,7 @@ def _unit(v: np.ndarray) -> np.ndarray:
     return v / (np.linalg.norm(v) + 1e-9)
 
 
-def _assign_chunk(embs, centroids, counts, threshold: float):
+def _assign_chunk(embs, centroids, counts, threshold: float, force_count: "int | None" = None):
     """One-to-one match a chunk's embeddings to global speakers; grow as needed.
 
     Hungarian assignment minimizes total cosine distance between this chunk's
@@ -99,15 +99,33 @@ def _assign_chunk(embs, centroids, counts, threshold: float):
                          for e in embs])
         rows, cols = linear_sum_assignment(cost)
         for r, c in zip(rows, cols):
-            if cost[r, c] < threshold:
-                ids[r] = c
-                centroids[c] = _unit(centroids[c] * counts[c] + embs[r])
-                counts[c] += 1
+            if force_count is not None:
+                is_at_limit = (len(centroids) >= force_count)
+                if is_at_limit or cost[r, c] < threshold:
+                    ids[r] = c
+                    centroids[c] = _unit(centroids[c] * counts[c] + embs[r])
+                    counts[c] += 1
+            else:
+                if cost[r, c] < threshold:
+                    ids[r] = c
+                    centroids[c] = _unit(centroids[c] * counts[c] + embs[r])
+                    counts[c] += 1
     for r in range(len(embs)):
         if ids[r] is None:
-            ids[r] = len(centroids)
-            centroids.append(embs[r].copy())
-            counts.append(1)
+            if force_count is not None and len(centroids) >= force_count:
+                if centroids:
+                    c = int(np.argmin([1.0 - float(np.dot(embs[r], cent)) for cent in centroids]))
+                    ids[r] = c
+                    centroids[c] = _unit(centroids[c] * counts[c] + embs[r])
+                    counts[c] += 1
+                else:
+                    ids[r] = 0
+                    centroids.append(embs[r].copy())
+                    counts.append(1)
+            else:
+                ids[r] = len(centroids)
+                centroids.append(embs[r].copy())
+                counts.append(1)
     return ids
 
 
@@ -159,7 +177,7 @@ def separate_longform(
     centroids: List[np.ndarray] = []
     counts: List[int] = []
     for start, wavs, embs in per_chunk:
-        ids = _assign_chunk(embs, centroids, counts, cluster_threshold)
+        ids = _assign_chunk(embs, centroids, counts, cluster_threshold, force_count=force_count)
         for wav, g in zip(wavs, ids):
             items.append((start, wav, g))
     num_speakers = len(centroids)

@@ -217,7 +217,7 @@ def build_ui() -> gr.Blocks:
                                   placeholder="Type something...")
             tts_btn = gr.Button("Clone voice", variant="secondary",
                                 interactive=tts_ready)
-            tts_audio = gr.Audio(label="Synthesised speech", visible=False)
+            tts_audio = gr.Audio(label="Synthesised speech")
             if tts_ready:
                 tts_btn.click(clone_voice_fn,
                               [tts_text, tts_speaker, tts_lang], tts_audio)

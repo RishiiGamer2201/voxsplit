@@ -60,11 +60,38 @@ def read_video(path: Path) -> Tuple[Optional[np.ndarray], Optional[np.ndarray],
     audio_chunks, sr = [], None
     try:
         container.seek(0)
-        for aframe in container.decode(audio=0):
-            sr = aframe.sample_rate
-            audio_chunks.append(aframe.to_ndarray().astype(np.float32).reshape(-1))
-    except Exception:
-        pass
+        if container.streams.audio:
+            astream = container.streams.audio[0]
+            sr = astream.rate
+            resampler = av.AudioResampler(format="flt", layout="mono", rate=sr)
+            for aframe in container.decode(audio=0):
+                for rframe in resampler.resample(aframe):
+                    audio_chunks.append(rframe.to_ndarray().flatten())
+            # Flush the resampler
+            for rframe in resampler.resample(None) or []:
+                audio_chunks.append(rframe.to_ndarray().flatten())
+    except Exception as e:
+        print(f"Warning: av.AudioResampler failed: {e}. Falling back to manual NumPy downmixing...")
+        audio_chunks, sr = [], None
+        try:
+            container.seek(0)
+            for aframe in container.decode(audio=0):
+                sr = aframe.sample_rate
+                data = aframe.to_ndarray()
+                # planar format (channels, samples)
+                if data.ndim == 2:
+                    if data.shape[0] < data.shape[1]:
+                        mono = data.mean(axis=0)
+                    else:
+                        mono = data.mean(axis=1)
+                elif data.ndim == 1:
+                    mono = data
+                else:
+                    mono = data.mean(axis=tuple(range(data.ndim - 1)))
+                audio_chunks.append(mono.astype(np.float32))
+        except Exception as e2:
+            print(f"Warning: Manual downmixing failed: {e2}")
+
     audio = np.concatenate(audio_chunks) if audio_chunks else None
     return frames, audio, sr, fps
 
