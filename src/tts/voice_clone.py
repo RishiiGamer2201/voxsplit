@@ -48,16 +48,32 @@ class VoiceCloner:
         self._tts = None  # lazy load
 
     def _load(self) -> None:
-        """Load XTTS v2 model on first use."""
+        """Load XTTS v2 model on first use.
+
+        Distinguishes "not installed" from "installed but its import blew up",
+        because the second is the common case: coqui-tts needs transformers < 5,
+        and forcing that downgrade drags huggingface-hub below what gradio
+        requires. Reporting "not installed" for that would send you in circles.
+        """
         if self._tts is not None:
             return
+        import importlib.util
+        if importlib.util.find_spec("TTS") is None:
+            raise ImportError(
+                "coqui-tts is not installed (voice cloning is opt-in).\n"
+                "    pip install coqui-tts\n"
+                "See the warning in requirements.txt first: it pins "
+                "transformers/torch and can break this env.")
         try:
             from TTS.api import TTS
-        except ImportError:
+        except Exception as exc:
             raise ImportError(
-                "coqui-tts is not installed. Install it with:\n"
-                "    pip install coqui-tts"
-            )
+                f"coqui-tts IS installed but failed to import: {exc}\n"
+                f"Most likely a dependency clash — coqui-tts wants "
+                f"transformers < 5, while gradio needs huggingface-hub >= 1.2 "
+                f"(which pulls transformers 5). Voice cloning is optional; "
+                f"install it in a SEPARATE env rather than downgrading this "
+                f"one, and re-check `python src/check_env.py`.") from exc
         print("Loading XTTS v2 model (first use, ~30 s on CPU) ...")
         self._tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(
             self.device

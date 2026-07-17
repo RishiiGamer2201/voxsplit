@@ -179,8 +179,12 @@ def build_ui() -> gr.Blocks:
                         "voice. Run a separation first. The XTTS v2 model "
                         "(~1.8 GB) downloads and loads on first use.")
             with gr.Row():
-                tts_speaker = gr.Dropdown(choices=[], label="Voice",
-                                          interactive=False)
+                # allow_custom_value: a browser reloading against a fresh
+                # server still holds the old "Speaker 1" value while choices
+                # are empty, which Gradio otherwise rejects outright.
+                tts_speaker = gr.Dropdown(choices=[], value=None,
+                                          label="Voice", interactive=False,
+                                          allow_custom_value=True)
                 tts_lang = gr.Dropdown(
                     choices=[name for name, _ in LANG_CHOICES],
                     value="English", label="Language")

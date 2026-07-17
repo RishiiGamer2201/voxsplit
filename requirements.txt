@@ -43,12 +43,18 @@ gradio==6.20.0
 faster-whisper==1.2.1
 
 # OPT-IN: voice-cloning TTS (XTTS v2 via the community Coqui TTS fork).
-# Deliberately NOT installed by default: coqui-tts pins torch/transformers and
-# can DOWNGRADE the cu128 build this project needs, breaking GPU separation.
-# The demo imports it lazily, so everything else works without it. To enable:
-#     pip install coqui-tts        # ideally in a separate env, then verify:
-#     python src/check_env.py      # must still report CUDA avail: True
-# Note: XTTS v2 weights are under the Coqui Public Model License (non-commercial).
+# NOT installed by default, and it does NOT currently work in this env.
+# Tried and reverted (2026-07-17), the conflict is real:
+#   coqui-tts 0.27.5 needs transformers < 5 (it imports isin_mps_friendly and
+#   a top-level GenerationMixin, both removed in transformers 5). Downgrading
+#   with `pip install "transformers<5"` drags huggingface-hub to 0.36, but
+#   gradio 6.20 requires huggingface-hub >= 1.2 — so the web demo breaks, and
+#   transformers 4.57 then wants torchcodec on top. Separation/GPU survive the
+#   downgrade, the DEMO does not.
+# The code path is complete and lazily imported, so everything else works
+# without it. To try voice cloning, use a SEPARATE env (no gradio), then verify
+# this env is untouched with: python src/check_env.py
+# XTTS v2 weights are under the Coqui Public Model License (non-commercial).
 # coqui-tts>=0.27.0
 
 # Audio-visual mode (src/av): read video, per-face lip motion, assign separated
