@@ -12,6 +12,7 @@ Models load once at startup (~30 s). Uses the robust OR-PIT checkpoint by
 default; override with --orpit-ckpt / --clf-ckpt.
 """
 import argparse
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -173,11 +174,25 @@ def build_ui() -> gr.Blocks:
                 out_v = _output_block()
 
         # Voice cloning works off the most recent separation from EITHER tab:
-        # the separated track itself is the voice reference.
-        with gr.Accordion("Voice Clone TTS (XTTS v2)", open=False):
-            gr.Markdown("Type any text and hear it in a separated speaker's "
-                        "voice. Run a separation first. The XTTS v2 model "
-                        "(~1.8 GB) downloads and loads on first use.")
+        # the separated track itself is the voice reference. The controls are
+        # only interactive when coqui-tts is importable, so an env without it
+        # shows an explanation instead of throwing on every click.
+        tts_ready = importlib.util.find_spec("TTS") is not None
+        title = ("Voice Clone TTS (XTTS v2)" if tts_ready else
+                 "Voice Clone TTS (XTTS v2) — not installed in this env")
+        with gr.Accordion(title, open=False):
+            if tts_ready:
+                gr.Markdown("Type any text and hear it in a separated "
+                            "speaker's voice. Run a separation first. The XTTS "
+                            "v2 model (~1.8 GB) loads on first use.")
+            else:
+                gr.Markdown(
+                    "Voice cloning is **opt-in and not installed here**. The "
+                    "code path is complete (`src/tts/voice_clone.py`), but "
+                    "`coqui-tts` needs `transformers < 5`, which drags "
+                    "`huggingface-hub` below what Gradio requires and breaks "
+                    "this demo. Install it in a **separate env** to try it. "
+                    "Separation, AV, transcripts and timelines are unaffected.")
             with gr.Row():
                 # allow_custom_value: a browser reloading against a fresh
                 # server still holds the old "Speaker 1" value while choices
@@ -190,10 +205,12 @@ def build_ui() -> gr.Blocks:
                     value="English", label="Language")
             tts_text = gr.Textbox(label="Text to speak", lines=2,
                                   placeholder="Type something...")
-            tts_btn = gr.Button("Clone voice", variant="secondary")
+            tts_btn = gr.Button("Clone voice", variant="secondary",
+                                interactive=tts_ready)
             tts_audio = gr.Audio(label="Synthesised speech", visible=False)
-            tts_btn.click(clone_voice_fn, [tts_text, tts_speaker, tts_lang],
-                          tts_audio)
+            if tts_ready:
+                tts_btn.click(clone_voice_fn,
+                              [tts_text, tts_speaker, tts_lang], tts_audio)
 
         # The speaker picker is the last output slot of each separation.
         btn.click(separate, [inp, sensitivity, count_choice],
