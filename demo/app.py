@@ -20,7 +20,9 @@ import gradio as gr
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "tts"))
 from pipeline import Pipeline, DEFAULT_ORPIT, DEFAULT_CLF  # noqa: E402
+from voice_clone import _tts_env_available  # noqa: E402
 
 MAX_SPK = 8  # UI rows and the recursion cap; >5 is out of the trained range.
 
@@ -177,22 +179,30 @@ def build_ui() -> gr.Blocks:
         # the separated track itself is the voice reference. The controls are
         # only interactive when coqui-tts is importable, so an env without it
         # shows an explanation instead of throwing on every click.
-        tts_ready = importlib.util.find_spec("TTS") is not None
+        # Ready if coqui-tts is importable here, OR the isolated voxsplit-tts
+        # env exists (we shell out to it — it can't share this env's deps).
+        tts_ready = (importlib.util.find_spec("TTS") is not None
+                     or _tts_env_available())
         title = ("Voice Clone TTS (XTTS v2)" if tts_ready else
-                 "Voice Clone TTS (XTTS v2) — not installed in this env")
+                 "Voice Clone TTS (XTTS v2) — not installed")
         with gr.Accordion(title, open=False):
             if tts_ready:
                 gr.Markdown("Type any text and hear it in a separated "
-                            "speaker's voice. Run a separation first. The XTTS "
-                            "v2 model (~1.8 GB) loads on first use.")
+                            "speaker's voice — the separated track is the "
+                            "voice reference. Run a separation first. XTTS v2 "
+                            "(~1.8 GB) downloads on first use, and the first "
+                            "clone takes ~30-60 s on CPU.")
             else:
                 gr.Markdown(
-                    "Voice cloning is **opt-in and not installed here**. The "
-                    "code path is complete (`src/tts/voice_clone.py`), but "
-                    "`coqui-tts` needs `transformers < 5`, which drags "
-                    "`huggingface-hub` below what Gradio requires and breaks "
-                    "this demo. Install it in a **separate env** to try it. "
-                    "Separation, AV, transcripts and timelines are unaffected.")
+                    "Voice cloning is **opt-in and not set up here**. The code "
+                    "path is complete (`src/tts/voice_clone.py`), but "
+                    "`coqui-tts` needs `transformers < 5`, which conflicts "
+                    "with what Gradio requires — so it runs in an isolated "
+                    "env. Create it with:\n\n"
+                    "```\nconda create -y -n voxsplit-tts python=3.10\n"
+                    "conda run -n voxsplit-tts pip install coqui-tts\n```\n"
+                    "then restart the demo. Separation, AV, transcripts and "
+                    "timelines are unaffected.")
             with gr.Row():
                 # allow_custom_value: a browser reloading against a fresh
                 # server still holds the old "Speaker 1" value while choices

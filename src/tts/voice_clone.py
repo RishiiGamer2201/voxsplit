@@ -27,6 +27,47 @@ import numpy as np
 
 _CLONER_INSTANCE = None
 
+# Isolated env holding coqui-tts (see requirements.txt for why it can't share
+# the main env). Created with:
+#   conda create -y -n voxsplit-tts python=3.10
+#   conda run -n voxsplit-tts pip install coqui-tts
+TTS_ENV = "voxsplit-tts"
+
+
+def _tts_env_python() -> Optional[Path]:
+    """Path to the isolated TTS env's python.exe, or None if absent."""
+    import os
+    for root in (Path.home() / "miniconda3" / "envs",
+                 Path.home() / "anaconda3" / "envs",
+                 Path(os.environ.get("CONDA_PREFIX", "")).parent):
+        candidate = root / TTS_ENV / "python.exe"
+        if candidate.is_file():
+            return candidate
+        candidate = root / TTS_ENV / "bin" / "python"   # POSIX
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _tts_env_available() -> bool:
+    return _tts_env_python() is not None
+
+
+def _clone_via_subprocess(text: str, reference_wav: str, out_path: str,
+                          language: str) -> None:
+    """Run the cloning worker inside the isolated TTS env."""
+    import subprocess
+    py = _tts_env_python()
+    cli = Path(__file__).resolve().parent / "voice_clone_cli.py"
+    cmd = [str(py), str(cli), "--text", text, "--ref", str(reference_wav),
+           "--out", str(out_path), "--language", language]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0 or not Path(out_path).is_file():
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+        raise RuntimeError(
+            "Voice cloning failed in the isolated TTS env: "
+            + (tail[-1] if tail else f"exit {proc.returncode}"))
+
 
 class VoiceCloner:
     """Wraps XTTS v2 for zero-shot voice cloning.
@@ -99,8 +140,6 @@ class VoiceCloner:
         """
         import soundfile as sf
 
-        self._load()
-
         if language not in self.SUPPORTED_LANGUAGES:
             print(
                 f"Warning: language '{language}' not in XTTS supported list; "
@@ -111,12 +150,19 @@ class VoiceCloner:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             out_path = tmp.name
 
-        self._tts.tts_to_file(
-            text=text,
-            speaker_wav=reference_wav,
-            language=language,
-            file_path=out_path,
-        )
+        if _tts_env_available():
+            # coqui-tts cannot coexist with this env's gradio/transformers, so
+            # run it in the isolated `voxsplit-tts` env (same pattern as
+            # separate_mossformer2.py -> clearvoice env).
+            _clone_via_subprocess(text, reference_wav, out_path, language)
+        else:
+            self._load()
+            self._tts.tts_to_file(
+                text=text,
+                speaker_wav=reference_wav,
+                language=language,
+                file_path=out_path,
+            )
 
         wav, sr = sf.read(out_path, dtype="float32")
         Path(out_path).unlink(missing_ok=True)

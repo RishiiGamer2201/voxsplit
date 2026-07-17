@@ -161,18 +161,25 @@ Two tabs:
 
 Per speaker: player, spectrogram, transcript, plus a speaking timeline.
 
-**Voice Clone TTS (opt-in, currently not working in this env).** After any
-separation, the "Voice Clone TTS" panel speaks typed text in a chosen speaker's
-voice (XTTS v2, 12 languages) — the separated track is the voice reference, so
-no extra recording is needed. The code path is complete and lazily imported, so
-the rest of the demo is unaffected.
+**Voice Clone TTS (opt-in).** After any separation, the "Voice Clone TTS" panel
+speaks typed text in a chosen speaker's voice (XTTS v2, 12 languages) — the
+separated track *is* the voice reference, so no extra recording is needed.
 
-⚠️ **Do not `pip install coqui-tts` into this env.** It needs `transformers < 5`,
-and that downgrade drags `huggingface-hub` below what `gradio` requires, which
-breaks the web demo (separation and the GPU survive; the demo does not). Tried
-and reverted — details in `requirements.txt`. Use a **separate env** for voice
-cloning, then confirm this one is intact with `python src/check_env.py`.
-XTTS v2 weights are non-commercial (Coqui Public Model License).
+It runs in an **isolated env**, because `coqui-tts` needs `transformers < 5`,
+which drags `huggingface-hub` below what Gradio requires (installing it into
+the main env breaks the demo). VoxSplit shells out to it, the same way
+`separate_mossformer2.py` uses the `clearvoice` env. One-time setup:
+
+```powershell
+conda create -y -n voxsplit-tts python=3.10
+conda run -n voxsplit-tts pip install coqui-tts torch torchaudio torchcodec
+conda run -n voxsplit-tts pip install "transformers<5"
+```
+Restart the demo — it auto-detects the env and enables the panel (without it,
+the panel stays disabled and explains why; everything else is unaffected).
+First clone downloads XTTS v2 (~1.8 GB) and takes ~30-60 s on CPU.
+⚠️ XTTS v2 **weights are non-commercial** (Coqui Public Model License, accepted
+via `COQUI_TOS_AGREED` in `src/tts/voice_clone_cli.py`).
 
 ### Command line
 ```powershell
